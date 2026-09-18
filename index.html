@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>UniT — OMEGA Lab</title>
+    <meta
+      name="description"
+      content="UniT: Unified Geometry Learning with Group Autoregressive Transformer. A project of OMEGA Lab, HKUST(GZ)."
+    />
+    <link rel="icon" href="assets/brand/omega-mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="assets/fonts/inter-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="wordmark" href="../../" aria-label="OMEGA Lab home">
+          <img class="omega-glyph" src="assets/brand/omega-mark.svg" alt="" width="48" height="48" />
+          <span class="brand-copy">
+            <span class="brand-name">OMEGA<span class="brand-lab">LAB</span></span>
+            <span class="brand-expansion">
+              <span>Omnimodal Multi-Embodiment</span>
+              <span>Generalist Agents</span>
+            </span>
+          </span>
+        </a>
+        <div class="header-divider" aria-hidden="true"></div>
+        <span class="header-context">HKUST(GZ)</span>
+        <nav class="main-nav" aria-label="OMEGA Lab">
+          <a href="../../research/">Research</a>
+          <a href="../../publications/">Publications</a>
+          <a href="../../people/">People</a>
+          <a href="../../join/">Join</a>
+        </nav>
+      </div>
+    </header>
+
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <div class="container crumbs-inner">
+        <ol>
+          <li><a href="../../">OMEGA Lab</a></li>
+          <li><a href="../../research/#scene-understanding">Multimodal Perception</a></li>
+          <li aria-current="page">UniT</li>
+        </ol>
+        <a class="crumbs-back" href="../../research/#scene-understanding">
+          <span aria-hidden="true">←</span> Back to research
+        </a>
+      </div>
+    </nav>
+
+    <main id="main">
+      <section class="hero container">
+        <p class="eyebrow"><span class="eyebrow-rule"></span>MULTIMODAL PERCEPTION · 2026</p>
+        <h1>UniT</h1>
+        <p class="subtitle">Unified Geometry Learning with Group Autoregressive Transformer</p>
+
+        <ul class="authors">
+          <li>Haotian Wang<sup>1</sup></li>
+          <li>Yusong Huang<sup>1</sup></li>
+          <li>Zhaonian Kuang<sup>2,1</sup></li>
+          <li>Hongliang Lu<sup>1</sup></li>
+          <li>Xinhu Zheng<sup>1†</sup></li>
+          <li>Meng Yang<sup>2†</sup></li>
+          <li>Gang Hua<sup>3</sup></li>
+        </ul>
+        <ol class="affiliations">
+          <li><sup>1</sup>Intelligent Transportation Thrust, Systems Hub, HKUST(GZ)</li>
+          <li><sup>2</sup>National Key Laboratory of Human-Machine Hybrid Augmented Intelligence, Xi'an Jiaotong University</li>
+          <li><sup>3</sup>Applied Science, Amazon.com, Inc.</li>
+          <li><sup>†</sup>Corresponding authors</li>
+        </ol>
+
+        <div class="actions">
+          <a class="button" href="https://arxiv.org/abs/2605.21131">Paper <span aria-hidden="true">↗</span></a>
+          <a class="button button-light" href="https://github.com/Wang-xjtu/UniT">Code <span aria-hidden="true">↗</span></a>
+          <a class="button button-light" href="https://enceladush-unit.hf.space/">Live demo <span aria-hidden="true">↗</span></a>
+          <a class="button button-light" href="#citation">BibTeX</a>
+        </div>
+      </section>
+
+      <section class="container" aria-label="Introduction video">
+        <figure class="media-frame video-frame">
+          <video
+            class="intro-video"
+            src="assets/media/intro.mp4"
+            poster="assets/media/intro-poster.jpg"
+            autoplay
+            muted
+            loop
+            playsinline
+            controls
+            preload="metadata"
+          ></video>
+        </figure>
+      </section>
+
+      <section class="section container" id="overview">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-rule"></span>OVERVIEW</p>
+            <h2>One model for geometry perception</h2>
+          </div>
+          <p>
+            UniT is a unified feed-forward model that reformulates a wide range of geometry
+            perception capabilities into a single framework, covering diverse view
+            configurations, modality combinations, metric-scale perception, and long-horizon
+            scalability. It supports both online and offline inference over an arbitrary number
+            of views, flexibly incorporates auxiliary modalities such as camera parameters and
+            depth maps, recovers geometry at metric scale in physical units, and maintains
+            bounded complexity over long horizons in in-the-wild environments.
+          </p>
+        </div>
+
+        <ul class="capabilities">
+          <li>
+            <span class="cap-index">01</span>
+            <h3>Any view configuration</h3>
+            <p>Online video, binocular streams and offline multi-view sets, over any number of views.</p>
+          </li>
+          <li>
+            <span class="cap-index">02</span>
+            <h3>Any modality combination</h3>
+            <p>Camera intrinsics, extrinsics and depth maps can be added whenever they are available.</p>
+          </li>
+          <li>
+            <span class="cap-index">03</span>
+            <h3>Metric-scale perception</h3>
+            <p>Geometry is recovered in physical units rather than up to an unknown scale.</p>
+          </li>
+          <li>
+            <span class="cap-index">04</span>
+            <h3>Long-horizon scalability</h3>
+            <p>Complexity stays bounded as sequences grow in in-the-wild environments.</p>
+          </li>
+        </ul>
+
+        <figure class="media-frame overview">
+          <img
+            src="assets/media/overview.png"
+            width="2187"
+            height="1856"
+            loading="lazy"
+            alt="UniT overview: view configurations, auxiliary modalities and the group autoregressive transformer that produces metric-scale geometry."
+          />
+          <figcaption>Overview of UniT.</figcaption>
+        </figure>
+      </section>
+
+      <section class="section section-tint" id="examples">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-rule"></span>EXAMPLES</p>
+              <h2>Reconstructions in the wild</h2>
+            </div>
+            <p>
+              Point clouds reconstructed by UniT, from campus scenes at HKUST(GZ) to public
+              driving and synthetic sequences. Hover or tap a clip to play it.
+            </p>
+          </div>
+          <ul class="examples">
+            <li>
+              <video src="assets/media/examples/hkust_intr.mp4" poster="assets/media/examples/hkust_intr.jpg" muted loop playsinline preload="none"></video>
+              <span>HKUST(GZ) · INTR</span>
+            </li>
+            <li>
+              <video src="assets/media/examples/hkust_toy.mp4" poster="assets/media/examples/hkust_toy.jpg" muted loop playsinline preload="none"></video>
+              <span>HKUST(GZ) · Toy</span>
+            </li>
+            <li>
+              <video src="assets/media/examples/hkust_redbird.mp4" poster="assets/media/examples/hkust_redbird.jpg" muted loop playsinline preload="none"></video>
+              <span>HKUST(GZ) · Red Bird</span>
+            </li>
+            <li>
+              <video src="assets/media/examples/drift.mp4" poster="assets/media/examples/drift.jpg" muted loop playsinline preload="none"></video>
+              <span>Drift</span>
+            </li>
+            <li>
+              <video src="assets/media/examples/gta_sfm.mp4" poster="assets/media/examples/gta_sfm.jpg" muted loop playsinline preload="none"></video>
+              <span>GTA SfM</span>
+            </li>
+            <li>
+              <video src="assets/media/examples/kitti.mp4" poster="assets/media/examples/kitti.jpg" muted loop playsinline preload="none"></video>
+              <span>KITTI</span>
+            </li>
+          </ul>
+          <p class="note">
+            Explore the point clouds interactively and measure real-world distances on the
+            <a class="text-link" href="https://sc2i-hkustgz.github.io/UniT/#examples">original project page <span aria-hidden="true">↗</span></a>
+          </p>
+        </div>
+      </section>
+
+      <section class="demo-band">
+        <div class="container demo-inner">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-rule"></span>LIVE DEMO</p>
+            <h2>Run UniT on your own images</h2>
+            <p>The Hugging Face Space runs the released model in your browser, no setup required.</p>
+          </div>
+          <a class="button" href="https://enceladush-unit.hf.space/">Open the demo <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="section container" id="results">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-rule"></span>RESULTS</p>
+            <h2>Evaluated across tasks and settings</h2>
+          </div>
+          <p>
+            Compared with VGGT, π3, MapAnything, DepthAnything3, CUT3R and StreamVGGT under
+            both scale-invariant and metric-scale settings.
+          </p>
+        </div>
+
+        <dl class="stats">
+          <div><dt>Benchmarks</dt><dd>10</dd></div>
+          <div><dt>Tasks</dt><dd>7</dd></div>
+          <div><dt>Baselines</dt><dd>6</dd></div>
+        </dl>
+
+        <div class="tabs" data-tabs>
+          <div class="tab-list" role="tablist" aria-label="Result tasks">
+            <button role="tab" id="tab-a" aria-controls="panel-a" aria-selected="true">Multi-view reconstruction</button>
+            <button role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" tabindex="-1">Camera pose</button>
+            <button role="tab" id="tab-c" aria-controls="panel-c" aria-selected="false" tabindex="-1">Video depth</button>
+            <button role="tab" id="tab-d" aria-controls="panel-d" aria-selected="false" tabindex="-1">Monocular depth</button>
+            <button role="tab" id="tab-e" aria-controls="panel-e" aria-selected="false" tabindex="-1">Long horizon</button>
+            <button role="tab" id="tab-f" aria-controls="panel-f" aria-selected="false" tabindex="-1">Multi-modal</button>
+            <button role="tab" id="tab-g" aria-controls="panel-g" aria-selected="false" tabindex="-1">Depth completion</button>
+          </div>
+
+          <div role="tabpanel" id="panel-a" aria-labelledby="tab-a" class="tab-panel">
+            <p>Scene-level 7-Scenes and NRGBD, and object-centric DTU.</p>
+            <figure class="media-frame"><img src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." /></figure>
+          </div>
+          <div role="tabpanel" id="panel-b" aria-labelledby="tab-b" class="tab-panel" hidden>
+            <p>Synthetic outdoor Sintel, and real-world indoor TUM-Dynamic and ScanNetV2.</p>
+            <figure class="media-frame"><img src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." /></figure>
+          </div>
+          <div role="tabpanel" id="panel-c" aria-labelledby="tab-c" class="tab-panel" hidden>
+            <p>Sintel, and real-world Bonn and ETH3D.</p>
+            <figure class="media-frame"><img src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." /></figure>
+          </div>
+          <div role="tabpanel" id="panel-d" aria-labelledby="tab-d" class="tab-panel" hidden>
+            <p>Sintel, KITTI and NYUv2.</p>
+            <figure class="media-frame"><img src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." /></figure>
+          </div>
+          <div role="tabpanel" id="panel-e" aria-labelledby="tab-e" class="tab-panel" hidden>
+            <p>NRGBD with sequence lengths from 50 to 500 frames, in steps of 50.</p>
+            <div class="pair">
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
+            </div>
+          </div>
+          <div role="tabpanel" id="panel-f" aria-labelledby="tab-f" class="tab-panel" hidden>
+            <p>Arbitrary combinations of depth maps, intrinsics and extrinsics on 7-Scenes, ETH3D and ScanNetV2.</p>
+            <figure class="media-frame"><img src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." /></figure>
+          </div>
+          <div role="tabpanel" id="panel-g" aria-labelledby="tab-g" class="tab-panel" hidden>
+            <p>Raw depth maps with four sparse patterns on Sintel, KITTI and NYUv2.</p>
+            <figure class="media-frame"><img src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." /></figure>
+          </div>
+        </div>
+
+        <figure class="media-frame qualitative">
+          <img src="assets/media/results/fig8-qualitative.jpg" width="1770" height="720" loading="lazy" alt="Figure 8: qualitative multi-view reconstructions compared with ground truth, shown without alignment or filtering." />
+          <figcaption>
+            Qualitative multi-view reconstruction. Point clouds are shown raw, without alignment or
+            filtering; each row uses a consistent scene scale.
+          </figcaption>
+        </figure>
+      </section>
+
+      <section class="section section-tint" id="citation">
+        <div class="container">
+          <p class="eyebrow"><span class="eyebrow-rule"></span>CITATION</p>
+          <div class="bibtex">
+            <button class="copy" type="button" data-copy="#bibtex">Copy</button>
+            <pre id="bibtex"><code>@misc{wang2026unit,
+  title={UniT: Unified Geometry Learning with Group Autoregressive Transformer},
+  author={Haotian Wang and Yusong Huang and Zhaonian Kuang and Hongliang Lu and Xinhu Zheng and Meng Yang and Gang Hua},
+  year={2026},
+  eprint={2605.21131},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2605.21131},
+}</code></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <a class="wordmark small" href="../../">
+          <img class="omega-glyph" src="assets/brand/omega-mark.svg" alt="" width="36" height="36" />
+          <span>OMEGA<span class="brand-lab">LAB</span></span>
+        </a>
+        <p>UniT is part of OMEGA Lab's research on multimodal perception at HKUST(GZ).</p>
+        <a class="text-link" href="../../research/#scene-understanding">More in Multimodal Perception <span aria-hidden="true">→</span></a>
+      </div>
+    </footer>
+
+    <script src="assets/js/main.js" defer></script>
+  </body>
+</html>
