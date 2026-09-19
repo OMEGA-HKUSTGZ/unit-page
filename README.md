@@ -9,7 +9,7 @@ Project page for **UniT: Unified Geometry Learning with Group Autoregressive Tra
 
 ## Deployment
 
-A static page with no build step. It is served from the lab site's host at `/omega/projects/unit/`; header and breadcrumb links use relative paths (`../../`) back to the lab site, so keep that depth if the path changes.
+A static page with no build step. It is published with the lab site at <https://omega-hkustgz.github.io/projects/unit/> by the site's deploy workflow (re-run it in `OMEGA-HKUSTGZ/omega-lab-site` after changing this page); header and breadcrumb links use relative paths (`../../`) back to the lab site, so keep that depth if the path changes.
 
 Preview locally from a directory that mirrors the deployed path:
 
