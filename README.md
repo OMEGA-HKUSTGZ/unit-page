@@ -20,7 +20,7 @@ python3 -m http.server 4390 --directory /tmp/omega-preview
 # open http://127.0.0.1:4390/omega/projects/unit/
 ```
 
-The page keeps `noindex, nofollow` while the lab site is in preview.
+The published page is indexable and uses the lab's official project URL as its canonical address. Link previews use the existing introduction poster.
 
 ## Assets
 
