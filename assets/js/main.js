@@ -7,6 +7,20 @@ if (intro && reducedMotion) {
   intro.pause();
 }
 
+// The Hugging Face demo loads only when asked, so the page keeps its own look
+// and a sleeping Space does not greet every visitor.
+document.querySelectorAll('[data-space-src]').forEach((host) => {
+  host.querySelector('[data-space-load]')?.addEventListener('click', () => {
+    const frame = document.createElement('iframe');
+    frame.src = host.dataset.spaceSrc;
+    frame.title = 'UniT demo on Hugging Face Spaces';
+    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    frame.allowFullscreen = true;
+    host.replaceChildren(frame);
+    frame.focus();
+  });
+});
+
 // Accessible tabs for the results section.
 document.querySelectorAll('[data-tabs]').forEach((root) => {
   const tabs = [...root.querySelectorAll('[role="tab"]')];

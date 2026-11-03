@@ -285,19 +285,31 @@
           <div>
             <p class="eyebrow"><span class="eyebrow-rule"></span>LIVE DEMO</p>
             <h2>Run UniT on your own images</h2>
-            <p>The Hugging Face Space runs the released model in your browser, no setup required.</p>
+            <p>The Hugging Face Space runs the released model on your images, no setup required.</p>
           </div>
-          <a class="button" href="https://enceladush-unit.hf.space/">Open the demo <span aria-hidden="true">↗</span></a>
         </div>
         <div class="container">
-          <div class="hf-space">
-            <iframe
-              src="https://enceladush-unit.hf.space/"
-              title="UniT demo on Hugging Face Spaces"
-              loading="lazy"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-            ></iframe>
+          <div class="hf-space" data-space-src="https://enceladush-unit.hf.space/">
+            <div class="demo-card">
+              <div class="demo-card-text">
+                <ol class="demo-steps">
+                  <li><span class="cap-index">01</span>Upload images or a video, or load one of five packaged examples.</li>
+                  <li><span class="cap-index">02</span>Set the group size: how many frames UniT reconstructs together.</li>
+                  <li><span class="cap-index">03</span>Reconstruct, then explore the metric-scale point cloud.</li>
+                </ol>
+                <div class="demo-card-actions">
+                  <button class="button" type="button" data-space-load>Run the demo here</button>
+                  <a class="button button-light" href="https://enceladush-unit.hf.space/" target="_blank" rel="noopener">Open in a new tab <span aria-hidden="true">↗</span></a>
+                </div>
+                <p class="demo-card-note">Runs on Hugging Face Spaces. If the Space is asleep it takes about a minute to start.</p>
+              </div>
+              <div class="demo-card-media" aria-hidden="true">
+                <img src="assets/media/examples/hkust_toy.jpg" width="640" height="360" loading="lazy" alt="" />
+                <img src="assets/media/examples/drift.jpg" width="640" height="360" loading="lazy" alt="" />
+                <img src="assets/media/examples/hkust_intr.jpg" width="640" height="360" loading="lazy" alt="" />
+                <img src="assets/media/examples/hkust_redbird.jpg" width="640" height="360" loading="lazy" alt="" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
