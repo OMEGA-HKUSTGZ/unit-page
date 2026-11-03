@@ -389,36 +389,293 @@ h3 {
   color: var(--text);
 }
 
-/* Examples */
-.examples {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-  margin: 0 0 28px;
+/* Chapter links under the intro video */
+.chapters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
 }
-.examples li {
+.chapters a {
+  font: 500 14px var(--body);
+  background: var(--white);
+  border: 1px solid var(--line);
+  padding: 9px 14px;
+}
+.chapters a:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* Examples — interactive point-cloud viewer (ported from the original page) */
+.demo-hint {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+.measure-hint {
+  display: none;
+  width: fit-content;
+  margin: 0 0 12px;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: var(--brand);
+  background: var(--accent-soft);
+  border: 1px solid var(--peach);
+}
+.measure-hint.visible {
+  display: block;
+}
+.demo-ply-panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 380px;
+  overflow: hidden;
   background: var(--white);
   border: 1px solid var(--line);
 }
-.examples video {
+#demo-message {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  text-align: center;
+  font: 500 15px var(--body);
+  color: var(--text);
+  pointer-events: none;
+}
+#demo-canvas {
+  display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  background: #111;
+  height: 100%;
+  touch-action: none;
+}
+.measure-button,
+.controls-toggle {
+  position: absolute;
+  top: 12px;
+  z-index: 10;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  background: var(--white);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    border-color 0.18s;
+}
+.measure-button {
+  right: 12px;
+  gap: 8px;
+  padding: 0 16px;
+  font: 500 14px var(--body);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+.measure-button .measure-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+.measure-button .measure-label {
+  white-space: nowrap;
+}
+.measure-button:hover,
+.measure-button.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+.measure-button.active {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+/* Brief attention pulse so first-time visitors notice the measure tool. */
+@keyframes measureButtonPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 95, 92, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(138, 95, 92, 0);
+  }
+}
+.measure-button:not(.active):not(:hover) {
+  animation: measureButtonPulse 2.2s ease-out 0.6s 3;
+}
+.controls-toggle {
+  right: 192px;
+  width: 42px;
+  font-size: 20px;
+  line-height: 1;
+}
+.controls-toggle:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.controls-toggle.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+.demo-controls-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 20;
+  width: 280px;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 24px);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 30px rgba(72, 74, 71, 0.16);
+}
+.demo-controls-panel.open {
+  display: flex;
+}
+.controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font: 600 12px var(--heading);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.controls-header button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text);
+  padding: 2px 6px;
+}
+.controls-header button:hover {
+  color: var(--brand);
+}
+.controls-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 14px;
+  overflow-y: auto;
+}
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.control-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: var(--ink);
+}
+.control-value {
+  min-width: 46px;
+  text-align: right;
+  font: 13px ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  color: var(--text);
+}
+.control-group input[type='range'] {
+  width: 100%;
+  margin: 4px 0;
+  accent-color: var(--brand);
+}
+.sub-control {
+  display: grid;
+  grid-template-columns: 64px 1fr 44px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+.bg-swatches {
+  display: flex;
+  gap: 8px;
+}
+.bg-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--line);
   cursor: pointer;
 }
-.examples span {
-  display: block;
-  padding: 12px 16px;
-  font: 600 14px var(--heading);
+.bg-swatch.selected {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.control-buttons {
+  display: flex;
+  margin-top: 4px;
+}
+.ctrl-btn {
+  flex: 1;
+  padding: 8px 10px;
+  font: 500 14px var(--body);
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  cursor: pointer;
+}
+.ctrl-btn:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.demo-thumbs {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.demo-thumb {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+.demo-thumb video {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #111;
+}
+.demo-thumb span {
+  padding: 8px 10px;
+  font: 600 13px/1.3 var(--heading);
   letter-spacing: 0.02em;
 }
-.note {
-  font-size: 15px;
-  color: var(--text);
-  margin: 0;
+.demo-thumb:hover {
+  border-color: var(--brand);
+}
+.demo-thumb.selected {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+.demo-thumb.selected span {
+  color: var(--brand);
 }
 
 /* Demo band */
@@ -439,6 +696,17 @@ h3 {
 .demo-inner p:last-child {
   color: var(--text);
   margin: 0;
+}
+.hf-space {
+  margin-bottom: 64px;
+  background: var(--white);
+  border: 1px solid var(--line);
+}
+.hf-space iframe {
+  display: block;
+  width: 100%;
+  height: 720px;
+  border: 0;
 }
 
 /* Results */
@@ -466,6 +734,24 @@ h3 {
   font: 600 44px/1 var(--heading);
   letter-spacing: -0.04em;
   color: var(--brand);
+}
+.result-summary {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 40px;
+  font-size: 15px;
+  color: var(--text);
+}
+.result-summary li + li {
+  margin-top: 8px;
+}
+.result-summary strong {
+  display: inline-block;
+  min-width: 110px;
+  font: 600 12px var(--heading);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink);
 }
 .tab-list {
   display: flex;
@@ -501,6 +787,89 @@ h3 {
 }
 .qualitative {
   margin-top: 56px;
+}
+.zoomable-image {
+  cursor: zoom-in;
+}
+
+/* Full-screen image viewer (ported from the original page) */
+body.lightbox-open {
+  overflow: hidden;
+}
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(72, 74, 71, 0.94);
+  color: var(--white);
+}
+.image-lightbox.open {
+  display: flex;
+}
+.image-lightbox-viewport {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px;
+  overflow: hidden;
+  touch-action: none;
+}
+.image-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  background: var(--white);
+  object-fit: contain;
+  transform-origin: center center;
+  transition: transform 0.12s ease-out;
+  user-select: none;
+  -webkit-user-drag: none;
+  cursor: zoom-in;
+}
+.image-lightbox-img.is-zoomed {
+  cursor: grab;
+}
+.image-lightbox-img.is-dragging {
+  cursor: grabbing;
+  transition: none;
+}
+.image-lightbox-close,
+.image-lightbox-control {
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--white);
+  font: 600 16px/1 var(--body);
+  cursor: pointer;
+}
+.image-lightbox-close:hover,
+.image-lightbox-control:hover {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+.image-lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10002;
+  width: 42px;
+  font-size: 22px;
+}
+.image-lightbox-toolbar {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10002;
+  display: flex;
+  gap: 8px;
+}
+.image-lightbox-control {
+  min-width: 42px;
+  padding: 0 12px;
 }
 
 /* Citation */
@@ -579,8 +948,11 @@ h3 {
     padding-left: 0;
     border-left: 0;
   }
-  .examples {
-    grid-template-columns: 1fr 1fr;
+  .demo-thumbs {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .hf-space iframe {
+    height: 640px;
   }
 }
 
@@ -611,7 +983,6 @@ h3 {
     padding-block: 48px 36px;
   }
   .capabilities,
-  .examples,
   .pair,
   .stats {
     grid-template-columns: 1fr;
@@ -638,10 +1009,54 @@ h3 {
     min-height: 44px;
     padding: 10px 16px;
   }
+  .demo-ply-panel {
+    min-height: 280px;
+    aspect-ratio: 4 / 3;
+  }
+  .demo-thumbs {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  /* Icon-only measure button so both top-right controls fit on phones. */
+  .measure-button {
+    padding: 0 12px;
+  }
+  .measure-button .measure-label {
+    display: none;
+  }
+  .controls-toggle {
+    right: 64px;
+  }
+  .demo-controls-panel {
+    width: calc(100% - 24px);
+  }
+  .hf-space {
+    margin-bottom: 48px;
+  }
+  .hf-space iframe {
+    height: 560px;
+  }
+  .result-summary strong {
+    display: block;
+  }
+  .image-lightbox-viewport {
+    padding: 18px;
+  }
+  .image-lightbox-close {
+    top: max(12px, env(safe-area-inset-top));
+    right: 12px;
+  }
+  .image-lightbox-toolbar {
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+  .measure-button:not(.active):not(:hover) {
+    animation: none;
   }
 }
