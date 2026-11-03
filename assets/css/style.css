@@ -333,7 +333,7 @@ h3 {
   color: var(--text);
 }
 .overview img {
-  max-width: 960px;
+  max-width: 640px;
   margin-inline: auto;
 }
 .video-frame {
