@@ -566,13 +566,16 @@
     });
   });
 
-  // "See the curves" shows the long-horizon charts and the speed board below the cards.
+  // The long-horizon charts and the speed board sit below the cards, open by default;
+  // the card's button hides and shows them.
   document.querySelectorAll('.rx-more[aria-controls]').forEach((btn) => {
     const panel = document.getElementById(btn.getAttribute('aria-controls'));
     if (!panel) return;
     btn.addEventListener('click', () => {
       const open = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', String(open));
+      const label = btn.querySelector('.rx-more-label');
+      if (label) label.textContent = open ? 'Hide the curves' : 'Show the curves, speed and memory';
       panel.hidden = !open;
       if (!open) return;
       charts.longHorizon?.measure();

@@ -2675,20 +2675,8 @@ body.lightbox-open {
 
 /* Long horizon: Fig. 9 redrawn from its markers */
 /* Results beyond the radar: one claim card per setting */
-.rx-intro {
-  margin: 72px 0 26px;
-  max-width: 72ch;
-}
-.rx-intro h3 {
-  font-size: 26px;
-  margin: 0 0 8px;
-}
-.rx-intro p {
-  margin: 0;
-  color: var(--text);
-  font-size: 16px;
-}
 .rx-cards {
+  margin-top: 56px;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
@@ -2837,6 +2825,10 @@ body.lightbox-open {
   margin: 0 0 16px;
   color: var(--text);
   font-size: 15px;
+}
+.rx-detail > p strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 .rx-spark .sp-unit,
 .rx-spark .sp-other {
