@@ -1,31 +1,15 @@
 # Republish https://omega-hkustgz.github.io/projects/unit/ after a push to main.
-# The lab site (OMEGA-HKUSTGZ/omega-lab-site) copies this repository's main at publish time;
-# see its docs/publishing.md. Needs the secret LAB_SITE_DISPATCH_TOKEN; without it the job only warns.
+# The shared workflow lives in OMEGA-HKUSTGZ/.github; the lab site lists this page
+# in its project-pages.json.
 name: Publish on the lab site
+
 on:
   push:
     branches: [main]
     paths-ignore: [README.md]
   workflow_dispatch:
-permissions: {}
-concurrency:
-  group: publish-lab-site
-  cancel-in-progress: true
+
 jobs:
-  dispatch:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Ask omega-lab-site to republish
-        env:
-          GH_TOKEN: ${{ secrets.LAB_SITE_DISPATCH_TOKEN }}
-          SHA: ${{ github.sha }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo "::warning::LAB_SITE_DISPATCH_TOKEN is not set; run the omega-lab-site deploy workflow by hand."
-            exit 0
-          fi
-          gh api repos/OMEGA-HKUSTGZ/omega-lab-site/dispatches \
-            -f event_type=project-page-updated \
-            -f 'client_payload[repository]=${{ github.repository }}' \
-            -f "client_payload[sha]=$SHA"
+  publish:
+    uses: OMEGA-HKUSTGZ/.github/.github/workflows/notify-lab-site.yml@main
+    secrets: inherit
