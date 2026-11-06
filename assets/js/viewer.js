@@ -95,9 +95,13 @@ function initDeferredDemo() {
     if (!demo) return;
 
     let demoPromise = null;
+    let ready = false;
     const getDemo = () => {
         if (!demoPromise) {
-            demoPromise = initDemo().catch(err => {
+            demoPromise = initDemo().then(controller => {
+                ready = true;
+                return controller;
+            }).catch(err => {
                 console.error('Failed to initialize demo:', err);
                 demoPromise = null;
                 const messageEl = document.getElementById('demo-message');
@@ -127,9 +131,13 @@ function initDeferredDemo() {
         io.observe(demo);
     }
 
+    // The settings and measure buttons are wired up once the viewer has
+    // started; a click that arrives before then is replayed afterwards.
     demo.addEventListener('click', (e) => {
         if (e.target.closest?.('.demo-thumb')) return;
+        const early = !ready && e.target.closest?.('#controls-toggle-btn, #measure-btn');
         startFull();
+        if (early) getDemo().then(() => early.click()).catch(() => {});
     });
 }
 
@@ -230,6 +238,12 @@ const INTERACTION_BUDGET_SETTLE_MS = 450;
 const PNTS_HEADER_PROBE_BYTES = 8192;
 const MAX_INDEXEDDB_CACHE_BYTES = 250 * 1024 * 1024;
 const MAX_INACTIVE_DECODED_BYTES = 120 * 1024 * 1024;
+// Phones and low-memory devices stream a uniform subsample first (any chunk
+// prefix is one, see the header comment); "Load all points" lifts the cap
+// for the rest of the visit. Desktops stream every point as before.
+const LIGHT_DEVICE = (window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false) ||
+    (navigator.deviceMemory != null && navigator.deviceMemory <= 4);
+const LIGHT_POINT_BUDGET = 2_000_000;
 
 window.__UNIT_DEMO_PERF = window.__UNIT_DEMO_PERF || {
     activeScene: null,
@@ -1075,6 +1089,9 @@ class PointCloudViewer {
         this.messageEl = messageEl;
         this.container = canvas.parentElement;
         this.loader = loader;
+        this.fullDetail = !LIGHT_DEVICE;
+        this.detailBtn = document.getElementById('detail-btn');
+        if (this.detailBtn) this.detailBtn.addEventListener('click', () => this.loadAllPoints());
         this.pointCloud = null;
         this.activeKey = null;
         this.activeQuality = 'idle';
@@ -1303,6 +1320,7 @@ class PointCloudViewer {
         this.measureMode = !this.measureMode;
         if (this.measureBtn) {
             this.measureBtn.classList.toggle('active', this.measureMode);
+            this.measureBtn.setAttribute('aria-pressed', String(this.measureMode));
             this.measureBtn.title = this.measureMode
                 ? 'Measuring — click two points on the cloud (click here to exit)'
                 : 'Toggle distance measurement — click two points on the cloud to measure';
@@ -1759,7 +1777,7 @@ class PointCloudViewer {
         if (state.pointCloud) {
             this.pointCloud = state.pointCloud;
             if (state.pointCloud.parent !== this.scene) this.scene.add(state.pointCloud);
-            this._totalPoints = state.manifest?.count || state.loadedPoints || 0;
+            this._totalPoints = state.capacity || state.manifest?.count || state.loadedPoints || 0;
             this._loadedPoints = state.loadedPoints || 0;
             this.setPointSize(cfg.pointSize);
             if (cfg.brightness != null) this.setBrightness(cfg.brightness);
@@ -1786,12 +1804,18 @@ class PointCloudViewer {
             min: state.manifest.min,
             scale: state.manifest.scale,
         };
-        if (!state.positions || state.positions.length !== state.manifest.count * 3) {
-            state.positions = new Float32Array(state.manifest.count * 3);
-        }
-        if (!state.colors || state.colors.length !== state.manifest.count * 3) {
-            state.colors = new Uint8Array(state.manifest.count * 3);
-        }
+        // Arrays hold only the points this device streams; they grow (keeping
+        // what is decoded) when the user asks for every point.
+        const capacity = this._capacityPoints(state);
+        state.capacity = capacity;
+        const grow = (arr, Type) => {
+            if (arr && arr.length >= capacity * 3) return arr;
+            const next = new Type(capacity * 3);
+            if (arr) next.set(arr.subarray(0, Math.min(arr.length, next.length)));
+            return next;
+        };
+        state.positions = grow(state.positions, Float32Array);
+        state.colors = grow(state.colors, Uint8Array);
         if (!state.loadedChunks || state.loadedChunks.length !== state.manifest.chunkCount) {
             state.loadedChunks = new Uint8Array(state.manifest.chunkCount);
             state.loadedChunkCount = 0;
@@ -1803,17 +1827,17 @@ class PointCloudViewer {
         state.xform = computeXformFromHeader(header, state.cfg);
         this._cancelPendingFlush();
         state.geometry = this._installGeometry(
-            state.positions, state.colors, state.manifest.count, 0, state.cfg, state.xform.radius
+            state.positions, state.colors, capacity, 0, state.cfg, state.xform.radius
         );
         state.pointCloud = this.pointCloud;
         state.pointCloud.visible = !!state.revealed;
-        this._totalPoints = state.manifest.count;
+        this._totalPoints = capacity;
         this._loadedPoints = state.loadedPoints || 0;
         if (state.view) this._restoreViewState(state.view);
     }
 
     _startOrResumeState(state) {
-        if (state.status === 'ready') {
+        if (state.status === 'ready' && (state.loadedLimit ?? Infinity) >= this._chunkLimit(state)) {
             this.setMessage('');
             this._updatePerf({ loading: false, status: 'ready' });
             return;
@@ -1886,10 +1910,11 @@ class PointCloudViewer {
             this._commitStateProgress(state);
 
             let nextToSchedule = 0;
+            const chunkLimit = this._chunkLimit(state);
             const activeFetches = new Map();
             const decodeQueue = [];
             const schedule = () => {
-                while (activeFetches.size < CHUNK_FETCH_WINDOW && nextToSchedule < state.manifest.chunkCount) {
+                while (activeFetches.size < CHUNK_FETCH_WINDOW && nextToSchedule < chunkLimit) {
                     const idx = nextToSchedule++;
                     if (state.loadedChunks[idx]) continue;
                     const task = this._fetchChunkForState(state, idx, abort.signal)
@@ -1935,6 +1960,7 @@ class PointCloudViewer {
             if (state.uploadRaf) await nextFrame();
 
             state.status = 'ready';
+            state.loadedLimit = chunkLimit;
             state.revealed = true;
             state.fetchInFlight = 0;
             state.decodeQueueLength = 0;
@@ -2041,7 +2067,57 @@ class PointCloudViewer {
     _firstPaintTarget(state) {
         const sampling = Math.max(0.01, this._baseSamplingRate || 1);
         const targetLoaded = Math.ceil(FIRST_PAINT_VISIBLE_POINTS / sampling);
-        return Math.min(state.manifest.count, targetLoaded);
+        return Math.min(state.capacity || state.manifest.count, targetLoaded);
+    }
+
+    // How many chunks this device streams for a scene, and how many points
+    // that covers. Chunks are a shuffled stream, so the prefix is uniform.
+    _chunkLimit(state) {
+        const m = state.manifest;
+        if (!m) return 0;
+        if (this.fullDetail || m.count <= LIGHT_POINT_BUDGET) return m.chunkCount;
+        let i = 0;
+        while (i < m.chunkCount && m.chunks[i].firstPoint < LIGHT_POINT_BUDGET) i += 1;
+        return Math.max(1, i);
+    }
+
+    _capacityPoints(state) {
+        const m = state.manifest;
+        const limit = this._chunkLimit(state);
+        return limit >= m.chunkCount ? m.count : m.chunks[limit].firstPoint;
+    }
+
+    _updateDetailUI() {
+        const btn = this.detailBtn;
+        if (!btn) return;
+        const state = this.currentState;
+        const m = state?.manifest;
+        const limited = !!m && this._chunkLimit(state) < m.chunkCount;
+        btn.hidden = !limited;
+        if (!limited) return;
+        let rest = 0;
+        for (let i = this._chunkLimit(state); i < m.chunkCount; i++) {
+            if (!state.loadedChunks?.[i]) rest += m.chunks[i].compressedSize;
+        }
+        const mp = (n) => (n / 1e6).toFixed(1);
+        btn.querySelector('.detail-count').textContent = `${mp(state.capacity)} of ${mp(m.count)} M points`;
+        btn.querySelector('.detail-act').textContent = `Load all · ${Math.max(1, Math.round(rest / 1e6))} MB`;
+    }
+
+    // Lift the device budget: grow the arrays, reinstall the geometry with
+    // what is already decoded, and stream the remaining chunks.
+    loadAllPoints() {
+        if (this.fullDetail) return;
+        this.fullDetail = true;
+        const state = this.currentState;
+        if (this.detailBtn) this.detailBtn.hidden = true;
+        if (!state?.manifest) return;
+        // Re-enter the scene through the normal path: it regrows the arrays,
+        // re-uploads what is decoded, reapplies the view settings and resumes.
+        this._captureStateView(state);
+        this._abortStateStream(state);
+        this._disposeStateGpu(state);
+        this._activateState(state.key, state.cfg);
     }
 
     _updateLoadedPrefix(state) {
@@ -2054,7 +2130,7 @@ class PointCloudViewer {
             : state.manifest.chunks[state.contiguousChunks]?.firstPoint || 0;
         state.loadedPoints = contiguousPoints;
         if (this.currentState === state) {
-            this._totalPoints = state.manifest.count;
+            this._totalPoints = state.capacity || state.manifest.count;
             this._loadedPoints = contiguousPoints;
         }
         return contiguousPoints;
@@ -2112,6 +2188,7 @@ class PointCloudViewer {
     }
 
     _commitStateProgress(state, dirtyChunkIndex = null) {
+        if (this.currentState === state) this._updateDetailUI();
         if (dirtyChunkIndex != null) this._queueChunkUpload(state, dirtyChunkIndex);
         const contiguousPoints = this._updateLoadedPrefix(state);
 
@@ -2192,6 +2269,25 @@ class PointCloudViewer {
     // Runtime setters used by the view controls panel.  All of them no-op
     // gracefully when there is no point cloud loaded yet (the panel can
     // still write values; the next scene load will pick them up via cfg).
+    // Points use size attenuation: on screen, size × (height / 2) / depth px.
+    // The panel works in pixels at the orbit centre; 1 px is the finest.
+    _pxPerWorld() {
+        const z = this.camera && this.controls ? this.camera.position.distanceTo(this.controls.target) : 0;
+        const hgt = this.container.clientHeight;
+        return z > 0 && hgt > 0 ? hgt / (2 * z) : 0;
+    }
+
+    pointSizeToPx(size) {
+        const k = this._pxPerWorld();
+        if (!k || size <= 1e-5) return 1;
+        return Math.max(1, Math.min(10, Math.round(size * k * 2) / 2));
+    }
+
+    pxToPointSize(px) {
+        const k = this._pxPerWorld();
+        return px <= 1 || !k ? 1e-6 : px / k;
+    }
+
     setPointSize(size) {
         if (!this.pointCloud) return;
         this.pointCloud.material.size = size;
@@ -2483,6 +2579,7 @@ class ViewerControls {
         const want = (force != null) ? force : !this.panel.classList.contains('open');
         this.panel.classList.toggle('open', want);
         this.toggle.classList.toggle('active', want);
+        this.toggle.setAttribute('aria-expanded', String(want));
     }
 
     _$(id) { return document.getElementById(id); }
@@ -2500,9 +2597,10 @@ class ViewerControls {
         };
 
         bindRange('ctrl-pointsize', 'ctrl-pointsize-val', (v) => {
-            this.viewer.setPointSize(v);
-            this._persist({ pointSize: v });
-        }, (v) => v.toFixed(6));
+            const size = this.viewer.pxToPointSize(v);
+            this.viewer.setPointSize(size);
+            this._persist({ pointSize: size });
+        }, (v) => `${String(+v)} px`);
 
         bindRange('ctrl-sampling', 'ctrl-sampling-val', (v) => {
             this.viewer.setSamplingRate(v / 100);
@@ -2554,7 +2652,7 @@ class ViewerControls {
             const lab = this._$(valId);
             if (lab && formatter) lab.textContent = formatter(value);
         };
-        set('ctrl-pointsize', 'ctrl-pointsize-val', cfg.pointSize, (v) => (+v).toFixed(6));
+        set('ctrl-pointsize', 'ctrl-pointsize-val', this.viewer.pointSizeToPx(cfg.pointSize), (v) => `${String(+v)} px`);
         const samp = (cfg.samplingRate != null ? cfg.samplingRate : 1) * 100;
         set('ctrl-sampling', 'ctrl-sampling-val', samp, (v) => Math.round(v) + '%');
         const bright = (cfg.brightness != null ? cfg.brightness : 1);

@@ -510,6 +510,45 @@ h3 {
 .measure-button:not(.active):not(:hover) {
   animation: measureButtonPulse 2.2s ease-out 0.6s 3;
 }
+.detail-button {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 6px 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.95);
+  font: 500 12.5px var(--body);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+.detail-button[hidden] {
+  display: none;
+}
+.detail-button:hover {
+  border-color: var(--brand);
+}
+.detail-count {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.detail-act {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 13px;
+  background: var(--brand);
+  color: var(--white);
+  font-weight: 600;
+  white-space: nowrap;
+}
 .controls-toggle {
   right: 192px;
   width: 42px;
@@ -1110,8 +1149,8 @@ body.lightbox-open {
     padding: 10px 16px;
   }
   .demo-ply-panel {
-    min-height: 280px;
-    aspect-ratio: 4 / 3;
+    min-height: 300px;
+    aspect-ratio: 1 / 1;
   }
   .demo-thumbs {
     grid-template-columns: repeat(2, 1fr);
@@ -1127,8 +1166,12 @@ body.lightbox-open {
   .controls-toggle {
     right: 64px;
   }
+  /* A bottom sheet over the lower part, so the cloud stays visible while tuning. */
   .demo-controls-panel {
+    top: auto;
+    bottom: 12px;
     width: calc(100% - 24px);
+    max-height: 58%;
   }
   .hf-space {
     margin-bottom: 48px;
