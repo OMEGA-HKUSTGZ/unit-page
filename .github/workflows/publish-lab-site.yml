@@ -1,0 +1,15 @@
+# Republish https://omega-hkustgz.github.io/projects/unit/ after a push to main.
+# The shared workflow lives in OMEGA-HKUSTGZ/.github; the lab site lists this page
+# in its project-pages.json.
+name: Publish on the lab site
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: [README.md]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: OMEGA-HKUSTGZ/.github/.github/workflows/notify-lab-site.yml@main
+    secrets: inherit
