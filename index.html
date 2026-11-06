@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261107q" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261107r" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -444,18 +444,13 @@
           <img data-table-img="depthCompletion" src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." />
         </div>
 
-        <div class="rx-intro">
-          <h3>Beyond the four core tasks</h3>
-          <p>Three settings most models can't handle: very long sequences, extra sensor inputs, and sparse depth.</p>
-        </div>
-
         <div class="rx-cards">
           <article class="rx-card" id="rx-long">
             <p class="rx-eyebrow">Long horizon</p>
             <h4 class="rx-claim">Still accurate at <b>500 frames</b></h4>
             <p class="rx-body">At 500 frames on NRGBD its pose error is <b>2.9×</b> lower than CUT3R's. DepthAnything3 runs out of memory at 300.</p>
             <div class="rx-vis" data-spark></div>
-            <button type="button" class="rx-more" aria-expanded="false" aria-controls="rx-long-detail">See the curves, speed and memory<span class="rx-arrow" aria-hidden="true">→</span></button>
+            <button type="button" class="rx-more" aria-expanded="true" aria-controls="rx-long-detail"><span class="rx-more-label">Hide the curves</span><span class="rx-arrow" aria-hidden="true">→</span></button>
           </article>
           <article class="rx-card" id="rx-modal">
             <p class="rx-eyebrow">Multi-modal input</p>
@@ -473,8 +468,8 @@
           </article>
         </div>
 
-        <div class="rx-detail" id="rx-long-detail" hidden>
-          <p>NRGBD, from 50 to 500 frames in steps of 50. Point at a chart to read the values.</p>
+        <div class="rx-detail" id="rx-long-detail">
+          <p><strong>Long horizon</strong> on NRGBD, from 50 to 500 frames in steps of 50. Point at a chart to read the values.</p>
           <div class="lh" data-longhorizon>
             <div class="pair">
               <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
@@ -591,14 +586,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/main.js?v=20261107q" defer></script>
-    <script src="assets/js/method.js?v=20261107q" defer></script>
-    <script src="assets/js/results-data.js?v=20261107q" defer></script>
-    <script src="assets/js/longhorizon-data.js?v=20261107q" defer></script>
-    <script src="assets/js/results.js?v=20261107q" defer></script>
-    <script src="assets/js/radar.js?v=20261107q" defer></script>
-    <script src="assets/js/analysis-data.js?v=20261107q" defer></script>
-    <script src="assets/js/analysis.js?v=20261107q" defer></script>
-    <script src="assets/js/viewer.js?v=20261107q" defer></script>
+    <script src="assets/js/main.js?v=20261107r" defer></script>
+    <script src="assets/js/method.js?v=20261107r" defer></script>
+    <script src="assets/js/results-data.js?v=20261107r" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261107r" defer></script>
+    <script src="assets/js/results.js?v=20261107r" defer></script>
+    <script src="assets/js/radar.js?v=20261107r" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261107r" defer></script>
+    <script src="assets/js/analysis.js?v=20261107r" defer></script>
+    <script src="assets/js/viewer.js?v=20261107r" defer></script>
   </body>
 </html>
