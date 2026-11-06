@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261107j" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -115,9 +115,11 @@
         </figure>
         <nav class="chapters" aria-label="On this page">
           <a href="#overview">Overview</a>
+          <a href="#method">Method</a>
           <a href="#examples">Examples</a>
           <a href="#demo">Demo</a>
           <a href="#results">Results</a>
+          <a href="#analysis">Analysis</a>
           <a href="#citation">Citation</a>
         </nav>
       </section>
@@ -144,37 +146,86 @@
             <span class="cap-index">01</span>
             <h3>Any view configuration</h3>
             <p>Online video, binocular streams and offline multi-view sets, over any number of views.</p>
+            <a class="cap-proof" href="#cap-views">−16% pose error from G&nbsp;=&nbsp;1 to G&nbsp;=&nbsp;N, same model<span aria-hidden="true"> →</span></a>
           </li>
           <li>
             <span class="cap-index">02</span>
             <h3>Any modality combination</h3>
             <p>Camera intrinsics, extrinsics and depth maps can be added whenever they are available.</p>
+            <a class="cap-proof" href="#cap-modality">Best average rank in 5 of 7 input combinations<span aria-hidden="true"> →</span></a>
           </li>
           <li>
             <span class="cap-index">03</span>
             <h3>Metric-scale perception</h3>
             <p>Geometry is recovered in physical units rather than up to an unknown scale.</p>
+            <a class="cap-proof" href="#cap-metric">Best average rank in all 7 metric-scale comparisons<span aria-hidden="true"> →</span></a>
           </li>
           <li>
             <span class="cap-index">04</span>
             <h3>Long-horizon scalability</h3>
             <p>Complexity stays bounded as sequences grow in in-the-wild environments.</p>
+            <a class="cap-proof" href="#cap-horizon">An N/3 cache stays within 0.002&nbsp;m of a full one<span aria-hidden="true"> →</span></a>
           </li>
         </ul>
 
-        <figure class="media-frame overview">
-          <img
-            src="assets/media/overview.png"
-            width="2187"
-            height="1856"
-            loading="lazy"
-            alt="UniT overview: view configurations, auxiliary modalities and the group autoregressive transformer that produces metric-scale geometry."
-          />
-          <figcaption>Overview of UniT.</figcaption>
-        </figure>
       </section>
 
-      <section class="section section-tint" id="examples">
+      <section class="section section-tint" id="method">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow"><span class="eyebrow-rule"></span>METHOD</p>
+              <h2>Group autoregressive transformer</h2>
+            </div>
+            <p>
+              UniT treats a group of G synchronized views as one autoregressive step. Attention is
+              bidirectional inside a group and causal across groups, so one model runs online
+              (G&nbsp;=&nbsp;1), on stereo or multi-camera streams, or offline (G&nbsp;=&nbsp;N).
+            </p>
+          </div>
+
+          <figure class="gx" data-method aria-label="Group autoregression explained through the attention mask">
+            <figcaption>
+              A toy example with N&nbsp;=&nbsp;4 frames from 7-Scenes and a KV-cache queue of
+              Q&nbsp;=&nbsp;2 frames. Rows are query frames and columns key frames, as in the paper's
+              mask figure (Fig.&nbsp;4); the point maps are UniT's predictions for these frames
+              (Fig.&nbsp;3). Pick a group size to step through it.
+            </figcaption>
+          </figure>
+
+          <ul class="method-parts">
+            <li>
+              <h3>Group autoregression</h3>
+              <p>Bidirectional attention within a group, causal attention across groups. One formulation covers monocular video, multi-camera streams and multi-view sets.</p>
+              <a class="mp-link" href="#cap-views"><span>01</span> Any view configuration</a>
+            </li>
+            <li>
+              <h3>Modal attention</h3>
+              <p>Depth and intrinsics become point tokens and extrinsics become pose tokens, fused with image tokens at aligned pixels. Inserted four times, it adds about 3% of the parameters.</p>
+              <a class="mp-link" href="#cap-modality"><span>02</span> Any modality combination</a>
+            </li>
+            <li>
+              <h3>Scale-adaptive geometry loss</h3>
+              <p>Scale-invariant constraints plus a partial absolute term. The model learns relative geometry first, then recovers metric scale on its own.</p>
+              <a class="mp-link" href="#cap-metric"><span>03</span> Metric-scale perception</a>
+            </li>
+            <li>
+              <h3>Queue-style KV caching</h3>
+              <p>Anchor-free relative poses remove the dependence on the first frame, so the cache can drop its oldest entries and stay bounded over long horizons.</p>
+              <a class="mp-link" href="#cap-horizon"><span>04</span> Long-horizon scalability</a>
+            </li>
+          </ul>
+
+          <div class="td" data-training>
+            <div class="td-head">
+              <h3>Training data</h3>
+              <p class="td-sum"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="examples">
         <div class="container">
           <div class="section-heading">
             <div>
@@ -321,22 +372,59 @@
             <h2>Evaluated across tasks and settings</h2>
           </div>
           <p>
-            Compared with VGGT, π3, MapAnything, DepthAnything3, CUT3R and StreamVGGT under
+            Compared with VGGT, π³, MapAnything, DepthAnything3, CUT3R and StreamVGGT under
             both scale-invariant and metric-scale settings.
           </p>
         </div>
 
         <dl class="stats">
-          <div><dt>Benchmarks</dt><dd>10</dd></div>
-          <div><dt>Tasks</dt><dd>7</dd></div>
-          <div><dt>Baselines</dt><dd>6</dd></div>
+          <div>
+            <dt>Benchmarks</dt><dd>10</dd>
+            <dd class="stat-items">
+              <ul>
+                <li>7-Scenes</li>
+                <li>NRGBD</li>
+                <li>DTU</li>
+                <li>TUM-Dynamic</li>
+                <li>ScanNetV2</li>
+                <li>Sintel</li>
+                <li>KITTI</li>
+                <li>NYUv2</li>
+                <li>ETH3D</li>
+                <li>Bonn</li>
+              </ul>
+            </dd>
+          </div>
+          <div>
+            <dt>Tasks</dt><dd>7</dd>
+            <dd class="stat-items">
+              <ul>
+                <li><a href="#tab-a" data-open-tab="tab-a">Multi-view reconstruction</a></li>
+                <li><a href="#tab-b" data-open-tab="tab-b">Camera pose</a></li>
+                <li><a href="#tab-c" data-open-tab="tab-c">Video depth</a></li>
+                <li><a href="#tab-d" data-open-tab="tab-d">Monocular depth</a></li>
+                <li><a href="#tab-e" data-open-tab="tab-e">Long horizon</a></li>
+                <li><a href="#tab-f" data-open-tab="tab-f">Multi-modal</a></li>
+                <li><a href="#tab-g" data-open-tab="tab-g">Depth completion</a></li>
+              </ul>
+            </dd>
+          </div>
+          <div>
+            <dt>Baselines</dt><dd>6</dd>
+            <dd class="stat-items">
+              <ul>
+                <li><span class="stat-sw" style="--c:#7f9a83"></span>VGGT<span class="stat-venue">CVPR 2025</span></li>
+                <li><span class="stat-sw" style="--c:#4f9aa0"></span>π³<span class="stat-venue">ICLR 2026</span></li>
+                <li><span class="stat-sw" style="--c:#c9965a"></span>MapAnything<span class="stat-venue">3DV 2026</span></li>
+                <li><span class="stat-sw" style="--c:#6f86a6"></span>DepthAnything3<span class="stat-venue">ICLR 2026</span></li>
+                <li><span class="stat-sw" style="--c:#8f7fa8"></span>CUT3R<span class="stat-venue">CVPR 2025</span></li>
+                <li><span class="stat-sw" style="--c:#a39684"></span>StreamVGGT<span class="stat-venue">ICLR 2026</span></li>
+              </ul>
+            </dd>
+          </div>
         </dl>
 
-        <ul class="result-summary">
-          <li><strong>Benchmarks</strong> 7-Scenes, NRGBD, DTU, TUM-Dynamic, ScanNetV2, Sintel, KITTI, NYUv2, ETH3D and Bonn.</li>
-          <li><strong>Tasks</strong> Multi-view reconstruction, camera pose estimation, video depth estimation, monocular depth estimation, long-horizon perception, multi-modal reconstruction and depth completion.</li>
-          <li><strong>Baselines</strong> VGGT (CVPR 2025), π<sup>3</sup> (ICLR 2026), MapAnything (3DV 2026), DepthAnything3 (ICLR 2026), CUT3R (CVPR 2025) and StreamVGGT (ICLR 2026).</li>
-        </ul>
+        <figure class="radar" data-radar aria-label="Benchmark radar"></figure>
 
         <div class="tabs" data-tabs>
           <div class="tab-list" role="tablist" aria-label="Result tasks">
@@ -351,34 +439,62 @@
 
           <div role="tabpanel" id="panel-a" aria-labelledby="tab-a" class="tab-panel">
             <p>Scene-level 7-Scenes and NRGBD, and object-centric DTU.</p>
-            <figure class="media-frame"><img src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." /></figure>
+            <div class="rchart" data-chart="reconstruction"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." /></figure>
+            </details>
           </div>
           <div role="tabpanel" id="panel-b" aria-labelledby="tab-b" class="tab-panel" hidden>
             <p>Synthetic outdoor Sintel, and real-world indoor TUM-Dynamic and ScanNetV2.</p>
-            <figure class="media-frame"><img src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." /></figure>
+            <div class="rchart" data-chart="pose"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." /></figure>
+            </details>
           </div>
           <div role="tabpanel" id="panel-c" aria-labelledby="tab-c" class="tab-panel" hidden>
             <p>Sintel, and real-world Bonn and ETH3D.</p>
-            <figure class="media-frame"><img src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." /></figure>
+            <div class="rchart" data-chart="videoDepth"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." /></figure>
+            </details>
           </div>
           <div role="tabpanel" id="panel-d" aria-labelledby="tab-d" class="tab-panel" hidden>
             <p>Sintel, KITTI and NYUv2.</p>
-            <figure class="media-frame"><img src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." /></figure>
+            <div class="rchart" data-chart="monoDepth"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." /></figure>
+            </details>
           </div>
           <div role="tabpanel" id="panel-e" aria-labelledby="tab-e" class="tab-panel" hidden>
             <p>NRGBD with sequence lengths from 50 to 500 frames, in steps of 50.</p>
-            <div class="pair">
-              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
-              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
+            <div class="lh" data-longhorizon>
+              <div class="pair">
+                <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
+                <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
+              </div>
             </div>
+            <h3 class="rc-subhead">Speed and memory</h3>
+            <div data-complexity></div>
           </div>
           <div role="tabpanel" id="panel-f" aria-labelledby="tab-f" class="tab-panel" hidden>
             <p>Arbitrary combinations of depth maps, intrinsics and extrinsics on 7-Scenes, ETH3D and ScanNetV2.</p>
-            <figure class="media-frame"><img src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." /></figure>
+            <div class="rchart" data-chart="multiModal"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." /></figure>
+            </details>
           </div>
           <div role="tabpanel" id="panel-g" aria-labelledby="tab-g" class="tab-panel" hidden>
             <p>Raw depth maps with four sparse patterns on Sintel, KITTI and NYUv2.</p>
-            <figure class="media-frame"><img src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." /></figure>
+            <div class="rchart" data-chart="depthCompletion"></div>
+            <details class="paper-table">
+              <summary>Show the table from the paper</summary>
+              <figure class="media-frame"><img src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." /></figure>
+            </details>
           </div>
         </div>
 
@@ -389,6 +505,81 @@
             filtering; each row uses a consistent scene scale.
           </figcaption>
         </figure>
+      </section>
+
+      <section class="section container" id="analysis">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-rule"></span>ANALYSIS</p>
+            <h2>Where each capability comes from</h2>
+          </div>
+          <p>
+            The four capabilities from the overview, each traced to the design behind it and
+            checked against the paper's own numbers: the benchmark tables (Tables&nbsp;3–7) and
+            the ablations (Tables&nbsp;9–11 and Fig.&nbsp;10).
+          </p>
+        </div>
+
+        <div class="an">
+          <article class="an-ch" id="cap-views">
+            <div class="an-claim">
+              <p class="an-idx"><span class="an-n">01</span><span class="an-cap">Any view configuration</span></p>
+              <h3>One model, from streaming video to offline sets</h3>
+              <p class="an-stat"><strong>−16%</strong><span>camera-pose error going from G&nbsp;=&nbsp;1 (online) to G&nbsp;=&nbsp;90 (offline) with the same model</span></p>
+              <p class="an-why">
+                Group autoregression makes the group size a choice at inference time. Larger
+                groups let more frames attend to each other in both directions, and the error falls
+                steadily across the whole range, with no cliff in between.
+              </p>
+              <a class="an-from" href="#method">Design <span>Group autoregression</span></a>
+            </div>
+            <div class="an-ev" data-an="views"></div>
+          </article>
+
+          <article class="an-ch" id="cap-modality">
+            <div class="an-claim">
+              <p class="an-idx"><span class="an-n">02</span><span class="an-cap">Any modality combination</span></p>
+              <h3>Extra sensors plug in, in any combination</h3>
+              <p class="an-stat"><strong>5 / 7</strong><span>combinations of intrinsics, extrinsics and depth in which UniT has the best average rank</span></p>
+              <p class="an-why">
+                Modal attention turns depth and intrinsics into point tokens and extrinsics into pose
+                tokens, then fuses them with image tokens at aligned pixels, so any subset can be
+                given at test time. Against simpler ways of fusing them it has the lowest average error.
+              </p>
+              <a class="an-from" href="#method">Design <span>Modal attention</span></a>
+            </div>
+            <div class="an-ev" data-an="modality"></div>
+          </article>
+
+          <article class="an-ch" id="cap-metric">
+            <div class="an-claim">
+              <p class="an-idx"><span class="an-n">03</span><span class="an-cap">Metric-scale perception</span></p>
+              <h3>Geometry in metres, where UniT leads every benchmark</h3>
+              <p class="an-stat"><strong>7 / 7</strong><span>metric-scale comparisons in Tables&nbsp;3–6 in which UniT has the best average rank, offline and online</span></p>
+              <p class="an-why">
+                Regressing metric geometry directly is hard to optimise. The scale-adaptive loss
+                learns relative geometry first and adds a partial absolute term, so metric scale
+                comes without giving up shape.
+              </p>
+              <a class="an-from" href="#method">Design <span>Scale-adaptive geometry loss</span></a>
+            </div>
+            <div class="an-ev" data-an="metric"></div>
+          </article>
+
+          <article class="an-ch" id="cap-horizon">
+            <div class="an-claim">
+              <p class="an-idx"><span class="an-n">04</span><span class="an-cap">Long-horizon scalability</span></p>
+              <h3>Memory that stays bounded as the sequence grows</h3>
+              <p class="an-stat"><strong>N/3</strong><span>of the frames in the KV-cache queue keep pose error within 0.002&nbsp;m of caching them all</span></p>
+              <p class="an-why">
+                Anchor-free relative poses mean no frame has to stay in memory for good, so the queue
+                drops old tokens once it is full. Dropping by stride stays closest to a full cache.
+              </p>
+              <a class="an-from" href="#method">Design <span>Queue-style KV caching</span></a>
+            </div>
+            <div class="an-ev" data-an="horizon"></div>
+          </article>
+        </div>
       </section>
 
       <section class="section section-tint" id="citation">
@@ -421,7 +612,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/main.js" defer></script>
+    <script src="assets/js/main.js?v=20261107j" defer></script>
+    <script src="assets/js/method.js?v=20261107j" defer></script>
+    <script src="assets/js/results-data.js?v=20261107j" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261107j" defer></script>
+    <script src="assets/js/results.js?v=20261107j" defer></script>
+    <script src="assets/js/radar.js?v=20261107j" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261107j" defer></script>
+    <script src="assets/js/analysis.js?v=20261107j" defer></script>
     <script src="assets/js/viewer.js" defer></script>
   </body>
 </html>
