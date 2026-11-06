@@ -1,10 +1,11 @@
-// Per-task results, built from the paper's own tables (assets/js/results-data.js)
-// and the digitized long-horizon curves (assets/js/longhorizon-data.js).
+// The three claim cards beyond the radar, built from the paper's own tables
+// (assets/js/results-data.js) and the digitized long-horizon curves
+// (assets/js/longhorizon-data.js).
 //
-// Each task is a board: one ranked column per metric, every row a method with a
-// bar relative to the best value in that column (best = full bar). Every method
-// that appears in any setting of a task keeps its row, so switching setting or
-// dataset only reorders rows and retimes bars; nothing changes size.
+// Long horizon gets a small pose-error curve; "See the curves" opens Fig. 9
+// redrawn in full and speed and memory (Table 2) as a ranked board. Multi-modal
+// (Table 7) and depth completion (Table 8) list UniT's placing per setting by
+// the paper's average rank, and open the paper's table in the lightbox.
 (() => {
   const DATA = window.UNIT_RESULTS;
   if (!DATA) return;
@@ -38,11 +39,6 @@
     return n;
   };
   const ordinal = (n) => (n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`);
-  const condLabel = (task, label) => {
-    if (task !== 'multiModal') return label;
-    return label.split('+').map((m) => (m === 'RT' ? 'R|T' : m)).join(' + ');
-  };
-
   function makeSeg(label, items, initial, onPick) {
     const wrap = h('div', 'rc-seg-wrap');
     wrap.appendChild(h('span', 'rc-seg-label', label));
@@ -231,96 +227,71 @@
 
   const charts = {};
 
-  // ---------- Per-task boards ----------
-  function buildChart(host) {
-    const task = host.dataset.chart;
-    const spec = DATA[task];
-    const ui = { cond: 0, dataset: 0 };
-
-    // Every method that appears in a group under any setting keeps a row.
-    const groupKeys = [];
-    const members = {};
-    spec.conditions.forEach((c) => c.groups.forEach((g) => {
-      if (!members[g.label]) {
-        members[g.label] = [];
-        groupKeys.push(g.label);
-      }
-      g.rows.forEach((r) => {
-        if (!members[g.label].some((m) => m.id === r.method)) members[g.label].push({ id: r.method, name: r.method });
-      });
-    }));
-    const displayName = (group, m) => {
-      if (m !== 'UniT') return m;
-      if (group === 'Offline') return 'UniT (G = N)';
-      if (group === 'Online') return 'UniT (G = 1)';
-      return 'UniT';
-    };
-    // Put UniT last within each group, as in the paper, and name it by its mode.
-    groupKeys.forEach((k) => {
-      members[k].sort((a, b) => Number(isUniT(a.id)) - Number(isUniT(b.id)));
-      members[k].forEach((m) => { m.name = displayName(k, m.id); });
+  // ---------- Claim cards ----------
+  // Placing of each method per setting, by the paper's average rank.
+  const placings = (task) => DATA[task].conditions.map((c) => {
+    const rows = c.groups[0].rows.slice().sort((a, b) => a.rank - b.rank);
+    return { label: c.label.replace(/RT/g, 'R|T'), place: 1 + rows.findIndex((r) => isUniT(r.method)) };
+  });
+  const KEYS = {
+    multiModal: 'K intrinsics · R|T camera poses · D depth. Placing by the paper’s average rank.',
+    depthCompletion: 'Uniform random · LiDAR 1–128 beams · SfM SIFT points · Grid downsampled. Placing by the paper’s average rank.',
+  };
+  function buildPills(host) {
+    const task = host.dataset.pills;
+    const ul = h('ul', 'rx-pills');
+    placings(task).forEach((p) => {
+      const li = h('li', `rx-pill${p.place === 1 ? ' is-first' : ''}`, `${p.label} · ${ordinal(p.place)}`);
+      ul.appendChild(li);
     });
+    host.append(ul, h('p', 'rx-key', KEYS[task]));
+  }
 
-    const { controls, body, note } = makeCard(host);
-    const board = makeBoard({
-      groups: groupKeys.map((k) => ({ key: k, members: members[k] })),
-      metrics: spec.metrics.map(([name, dir]) => ({ name, dir, digits: 3 })),
-    });
-    body.appendChild(board.root);
-
-    const condName = task === 'multiModal' ? 'Inputs' : task === 'depthCompletion' ? 'Sparse pattern' : 'Setting';
-    const condSeg = spec.conditions.length > 1
-      ? makeSeg(condName, spec.conditions.map((c) => condLabel(task, c.label)), 0, (i) => { ui.cond = i; draw(); })
-      : null;
-    const dataSeg = makeSeg('Dataset', spec.datasets, 0, (i) => { ui.dataset = i; draw(); });
-    const metricSeg = makeSeg('Metric', spec.metrics.map(([m]) => m), 0, (i) => board.setMetric(i));
-    metricSeg.wrap.classList.add('lb-metric-pick');
-    if (condSeg) controls.appendChild(condSeg.wrap);
-    controls.append(dataSeg.wrap, metricSeg.wrap);
-
-    note.textContent = `${spec.table} of the paper. Bars are relative to the best value in each column; bold values are the paper's best.`;
-
-    const GROUP_SUB = { Offline: 'all frames at once', Online: 'frame by frame' };
-    function draw() {
-      const cond = spec.conditions[ui.cond];
-      const base = ui.dataset * 3;
-      const state = {};
-      groupKeys.forEach((k) => {
-        const g = cond.groups.find((x) => x.label === k);
-        const rows = {};
-        g.rows.forEach((r) => {
-          rows[r.method] = {
-            values: [0, 1, 2].map((m) => r.values[base + m]),
-            best: [0, 1, 2].map((m) => r.best.includes(base + m)),
-          };
-        });
-        const u = g.rows.find((r) => isUniT(r.method));
-        const place = 1 + g.rows.filter((r) => r.rank < u.rank).length;
-        state[k] = {
-          title: k || 'All methods',
-          sub: k ? GROUP_SUB[k] : (task === 'monoDepth' ? 'single image' : task === 'multiModal' ? 'with these inputs' : 'sparse depth'),
-          note: `UniT avg. rank ${u.rank.toFixed(2)} · ${ordinal(place)} of ${g.rows.length}`,
-          noteTitle: `Average rank over all nine metric × dataset columns of ${spec.table}`,
-          rows,
-          absent: cond.label === 'Metric-scale' ? 'up-to-scale only' : 'not evaluated',
-        };
-      });
-      board.render(state);
-    }
-
-    charts[task] = {
-      show(condIndex, datasetIndex) {
-        if (condIndex >= 0) ui.cond = condIndex;
-        if (datasetIndex !== undefined) ui.dataset = datasetIndex;
-        condSeg?.sync(ui.cond);
-        dataSeg.sync(ui.dataset);
-        draw();
-        board.reveal();
-      },
-      reveal: board.reveal,
+  // Pose error over sequence length (Fig. 9, top), UniT against CUT3R and DA3.
+  function buildSpark(host) {
+    const LH = window.UNIT_LONGHORIZON;
+    if (!LH) return;
+    const ser = LH.metrics[0].series;
+    const W = 300, H = 132, n = LH.views.length;
+    const X = (i) => 6 + (i / (n - 1)) * (W - 62);
+    const Y = (v) => H - 40 - (v / 0.8) * (H - 50);
+    const d = (a) => a.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join('');
+    const svg = s('svg', { class: 'rx-spark', viewBox: `0 0 ${W} ${H}`, role: 'img',
+      'aria-label': `Pose error from ${LH.views[0]} to ${LH.views[n - 1]} frames: UniT stays near ${ser.UniT[n - 1].toFixed(2)} m while CUT3R rises to ${ser.CUT3R[n - 1].toFixed(2)} m.` });
+    const paths = [];
+    paths.push(s('path', { class: 'sp-other', d: d(ser.CUT3R) }, svg));
+    paths.push(s('path', { class: 'sp-other', d: d(ser.DepthAnything3), 'stroke-dasharray': '3 3' }, svg));
+    paths.push(s('path', { class: 'sp-unit', d: d(ser.UniT) }, svg));
+    const k = ser.DepthAnything3.length - 1;
+    const xg = s('g', { transform: `translate(${X(k)},${Y(ser.DepthAnything3[k])})` }, svg);
+    s('path', { class: 'sp-x', d: 'M-4,-4L4,4M4,-4L-4,4' }, xg);
+    const t = (x, y, txt, cls, anchor) => {
+      const e = s('text', { x, y, class: cls || '', 'text-anchor': anchor || 'start' }, svg);
+      e.textContent = txt;
     };
-    draw();
-    onFirstView(board.root, board.reveal);
+    t(X(k), H - 20, 'DA3 out of memory', '', 'middle');
+    s('line', { class: 'sp-lead', x1: X(k), x2: X(k), y1: Y(ser.DepthAnything3[k]) + 6, y2: H - 31 }, svg);
+    t(X(n - 1) + 7, Y(ser.CUT3R[n - 1]) + 4, 'CUT3R');
+    t(X(n - 1) + 7, Y(ser.UniT[n - 1]) + 4, 'UniT', 'sp-us');
+    t(X(0), H - 2, `${LH.views[0]}`);
+    t(X(n - 1), H - 2, `${LH.views[n - 1]} frames`, '', 'end');
+    host.appendChild(svg);
+
+    // Draw the lines once the card comes into view.
+    if (reduced) return;
+    const dashed = paths[1];
+    paths.forEach((p) => {
+      const len = p.getTotalLength();
+      p.style.strokeDasharray = `${len}`;
+      p.style.strokeDashoffset = `${len}`;
+    });
+    onFirstView(svg, () => {
+      requestAnimationFrame(() => paths.forEach((p) => { p.style.strokeDashoffset = '0'; }));
+      setTimeout(() => {
+        paths.forEach((p) => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; });
+        dashed.style.strokeDasharray = '3 3';
+      }, 1400);
+    });
   }
 
   // ---------- Speed and memory (Table 2) ----------
@@ -372,14 +343,6 @@
     if (!LH) return;
     const X = LH.views;
     const last = X.length - 1;
-    const ate = LH.metrics[0].series;
-    const da3Last = LH.metrics[0].series.DepthAnything3.length - 1;
-    const ratio = ate.CUT3R[last] / ate.UniT[last];
-
-    const lede = h('p', 'lh-lede');
-    lede.innerHTML = `DepthAnything3 runs out of memory beyond <strong>${X[da3Last]} frames</strong>. `
-      + `From there UniT continues online with a ${LH.queue}-frame memory, and at ${X[last]} frames its pose error is `
-      + `<strong>${ratio.toFixed(1)}× lower</strong> than CUT3R's (${ate.UniT[last].toFixed(2)} vs ${ate.CUT3R[last].toFixed(2)} m ATE).`;
 
     const card = h('div', 'lb-card lh-card');
     const legend = h('ul', 'lh-legend');
@@ -405,7 +368,7 @@
       foot.appendChild(det);
     }
     card.append(legend, panels, foot);
-    host.prepend(lede, card);
+    host.prepend(card);
 
     const H = 260;
     const M = { l: 44, r: 58, t: 34, b: 30 };
@@ -590,30 +553,30 @@
     charts.longHorizon = { measure };
   }
 
-  document.querySelectorAll('[data-chart]').forEach(buildChart);
+  document.querySelectorAll('[data-pills]').forEach(buildPills);
+  document.querySelectorAll('[data-spark]').forEach(buildSpark);
   document.querySelectorAll('[data-complexity]').forEach(buildComplexity);
   document.querySelectorAll('[data-longhorizon]').forEach(buildLongHorizon);
   window.UNIT_CHARTS = charts;
 
-  // Task chips in the stats strip open their tab.
-  document.querySelectorAll('[data-open-tab]').forEach((link) => {
-    link.addEventListener('click', (e) => {
-      const tab = document.getElementById(link.dataset.openTab);
-      if (!tab) return;
-      e.preventDefault();
-      tab.click();
-      tab.closest('[data-tabs]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // "Table N from the paper" opens that table in the lightbox.
+  document.querySelectorAll('[data-open-table]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelector(`[data-table-img="${btn.dataset.openTable}"]`)?.click();
     });
   });
 
-  // Replay the bars when a tab is opened.
-  document.querySelectorAll('#results [role="tab"]').forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const panel = document.getElementById(tab.getAttribute('aria-controls'));
-      const task = panel?.querySelector('[data-chart]')?.dataset.chart;
-      if (task) charts[task].reveal();
-      if (panel?.querySelector('[data-longhorizon]')) charts.longHorizon?.measure();
-      if (panel?.querySelector('[data-complexity]')) charts.complexity?.reveal();
+  // "See the curves" shows the long-horizon charts and the speed board below the cards.
+  document.querySelectorAll('.rx-more[aria-controls]').forEach((btn) => {
+    const panel = document.getElementById(btn.getAttribute('aria-controls'));
+    if (!panel) return;
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      btn.setAttribute('aria-expanded', String(open));
+      panel.hidden = !open;
+      if (!open) return;
+      charts.longHorizon?.measure();
+      panel.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
     });
   });
 })();

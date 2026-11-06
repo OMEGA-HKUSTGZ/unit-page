@@ -487,7 +487,7 @@
 
     const foot = h('div', 'rd-dfoot');
     foot.appendChild(h('span', 'rd-hint', touch ? 'Tap a spoke for its numbers.' : 'Point at a spoke for its numbers.'));
-    const open = h('button', 'rd-open', `${spec.table} in full →`);
+    const open = h('button', 'rd-open', `${spec.table} from the paper ↗`);
     open.type = 'button';
     open.addEventListener('click', () => openTable(i));
     foot.appendChild(open);
@@ -499,14 +499,9 @@
     paintSpoke();
   }
 
-  const TAB_OF = { reconstruction: 'tab-a', pose: 'tab-b', videoDepth: 'tab-c', monoDepth: 'tab-d' };
+  // The per-task boards are gone; open the paper's table in the image viewer.
   function openTable(i) {
-    const sp = SPOKES[i];
-    const tab = document.getElementById(TAB_OF[sp.task]);
-    tab?.click();
-    const ci = DATA[sp.task].conditions.findIndex((c) => c.label === SCALES[ui.scale]);
-    window.UNIT_CHARTS?.[sp.task]?.show(ci, sp.di);
-    tab?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    document.querySelector(`[data-table-img="${SPOKES[i].task}"]`)?.click();
   }
 
   // Lock the side column to the tallest of the four views, so neither a

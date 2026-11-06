@@ -413,19 +413,6 @@ h3 {
   color: var(--text);
   margin-bottom: 18px;
 }
-.measure-hint {
-  display: none;
-  width: fit-content;
-  margin: 0 0 12px;
-  padding: 8px 14px;
-  font-size: 14px;
-  color: var(--brand);
-  background: var(--accent-soft);
-  border: 1px solid var(--peach);
-}
-.measure-hint.visible {
-  display: block;
-}
 .demo-ply-panel {
   position: relative;
   width: 100%;
@@ -454,61 +441,141 @@ h3 {
   height: 100%;
   touch-action: none;
 }
-.measure-button,
-.controls-toggle {
+.demo-tools {
   position: absolute;
   top: 12px;
+  right: 12px;
   z-index: 10;
-  height: 42px;
+  display: flex;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 14px rgba(72, 74, 71, 0.08);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.tool-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line);
-  background: var(--white);
-  color: var(--ink);
-  cursor: pointer;
-  transition:
-    background 0.18s,
-    color 0.18s,
-    border-color 0.18s;
-}
-.measure-button {
-  right: 12px;
   gap: 8px;
-  padding: 0 16px;
-  font: 500 14px var(--body);
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--white);
-}
-.measure-button .measure-icon {
-  font-size: 16px;
-  line-height: 1;
-}
-.measure-button .measure-label {
+  height: 38px;
+  min-width: 38px;
+  padding: 0 14px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 500 13.5px var(--body);
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
-.measure-button:hover,
-.measure-button.active {
-  background: var(--brand);
-  border-color: var(--brand);
+.tool-btn + .tool-btn {
+  border-left: 1px solid var(--line);
+}
+.tool-btn svg,
+.controls-header button svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tool-btn:hover {
+  color: var(--brand);
+  background: var(--accent-soft);
+}
+.tool-btn[aria-pressed='true'],
+.tool-btn[aria-expanded='true'] {
   color: var(--white);
+  background: var(--brand);
 }
-.measure-button.active {
-  box-shadow: 0 0 0 3px var(--accent-soft);
+.tool-btn:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
 }
-/* Brief attention pulse so first-time visitors notice the measure tool. */
-@keyframes measureButtonPulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(138, 95, 92, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 10px rgba(138, 95, 92, 0);
-  }
+.controls-toggle {
+  padding: 0;
+  width: 38px;
 }
-.measure-button:not(.active):not(:hover) {
-  animation: measureButtonPulse 2.2s ease-out 0.6s 3;
+.measure-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: calc(100% - 190px);
+  margin: 0;
+  padding: 0 14px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 13.5px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  box-shadow: 0 4px 14px rgba(72, 74, 71, 0.08);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.measure-status[hidden] {
+  display: none;
+}
+.measure-status strong {
+  font: 600 16px var(--heading);
+  color: var(--brand);
+}
+.measure-status span {
+  font-size: 12.5px;
+  color: var(--text);
+}
+.measure-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.mo-case {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.mo-line {
+  stroke: var(--brand);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  stroke-linecap: round;
+}
+.mo-pt {
+  fill: var(--brand);
+  stroke: var(--white);
+  stroke-width: 2.5;
+}
+.measure-tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  padding: 4px 10px;
+  font: 600 14px var(--heading);
+  color: var(--white);
+  background: var(--brand);
+  box-shadow: 0 4px 12px rgba(72, 74, 71, 0.2);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.measure-tag[hidden] {
+  display: none;
 }
 .detail-button {
   position: absolute;
@@ -549,29 +616,14 @@ h3 {
   font-weight: 600;
   white-space: nowrap;
 }
-.controls-toggle {
-  right: 192px;
-  width: 42px;
-  font-size: 20px;
-  line-height: 1;
-}
-.controls-toggle:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-}
-.controls-toggle.active {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: var(--white);
-}
 .demo-controls-panel {
   position: absolute;
-  top: 12px;
+  top: 60px;
   right: 12px;
   z-index: 20;
-  width: 280px;
+  width: 284px;
   max-width: calc(100% - 24px);
-  max-height: calc(100% - 24px);
+  max-height: calc(100% - 72px);
   display: none;
   flex-direction: column;
   overflow: hidden;
@@ -595,13 +647,21 @@ h3 {
   color: var(--ink);
 }
 .controls-header button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px -6px -4px 0;
+  padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
-  font-size: 22px;
-  line-height: 1;
   color: var(--text);
-  padding: 2px 6px;
+  cursor: pointer;
+}
+.controls-header button svg {
+  width: 16px;
+  height: 16px;
 }
 .controls-header button:hover {
   color: var(--brand);
@@ -631,10 +691,50 @@ h3 {
   font: 13px ui-monospace, 'SFMono-Regular', Menlo, monospace;
   color: var(--text);
 }
-.control-group input[type='range'] {
+.demo-controls-panel input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
-  margin: 4px 0;
-  accent-color: var(--brand);
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.demo-controls-panel input[type='range']::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--brand) var(--p, 0%), var(--line) var(--p, 0%));
+}
+.demo-controls-panel input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 3px rgba(72, 74, 71, 0.2);
+}
+.demo-controls-panel input[type='range']::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.demo-controls-panel input[type='range']::-moz-range-progress {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+.demo-controls-panel input[type='range']::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--brand);
+  border-radius: 50%;
+  background: var(--white);
+}
+.demo-controls-panel input[type='range']:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 .sub-control {
   display: grid;
@@ -876,56 +976,10 @@ h3 {
   font-size: 11px;
   color: #8f9a9c;
 }
-.tab-list {
-  display: flex;
-  gap: 0 30px;
-  margin: 0 0 26px;
-  border-bottom: 1px solid var(--line);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-.tab-list::-webkit-scrollbar {
-  display: none;
-}
-.tab-list button {
-  flex: none;
-  font: 500 15px var(--body);
-  color: var(--text);
-  background: none;
-  border: 0;
-  padding: 13px 0 14px;
-  white-space: nowrap;
-  cursor: pointer;
-  box-shadow: inset 0 -2px 0 transparent;
-  transition:
-    color 0.2s,
-    box-shadow 0.25s;
-}
-.tab-list button:hover {
-  color: var(--ink);
-}
-.tab-list button[aria-selected='true'] {
-  color: var(--brand);
-  box-shadow: inset 0 -2px 0 var(--brand);
-}
-.tab-list button:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: -2px;
-}
-.tab-panel > p {
-  margin: 0 0 18px;
-  max-width: 72ch;
-  color: var(--text);
-  font-size: 16px;
-}
 .pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-}
-.qualitative {
-  margin-top: 56px;
 }
 .zoomable-image {
   cursor: zoom-in;
@@ -1156,15 +1210,10 @@ body.lightbox-open {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
-  /* Icon-only measure button so both top-right controls fit on phones. */
-  .measure-button {
-    padding: 0 12px;
-  }
-  .measure-button .measure-label {
-    display: none;
-  }
-  .controls-toggle {
-    right: 64px;
+  /* Status under the toolbar, where it has the full width. */
+  .measure-status {
+    top: 60px;
+    max-width: calc(100% - 24px);
   }
   /* A bottom sheet over the lower part, so the cloud stays visible while tuning. */
   .demo-controls-panel {
@@ -1201,9 +1250,6 @@ body.lightbox-open {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-  .measure-button:not(.active):not(:hover) {
-    animation: none;
   }
 }
 
@@ -2628,14 +2674,194 @@ body.lightbox-open {
 }
 
 /* Long horizon: Fig. 9 redrawn from its markers */
-.lh-lede {
-  margin: 0 0 18px;
-  max-width: 76ch;
+/* Results beyond the radar: one claim card per setting */
+.rx-intro {
+  margin: 72px 0 26px;
+  max-width: 72ch;
+}
+.rx-intro h3 {
+  font-size: 26px;
+  margin: 0 0 8px;
+}
+.rx-intro p {
+  margin: 0;
+  color: var(--text);
   font-size: 16px;
+}
+.rx-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.rx-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 24px 20px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  scroll-margin-top: 96px;
+}
+.rx-eyebrow {
+  margin: 0;
+  font: 600 12px var(--heading);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.rx-claim {
+  margin: 0;
+  font: 600 25px/1.2 var(--heading);
+  letter-spacing: -0.01em;
   color: var(--ink);
 }
-.lh-lede strong {
+.rx-claim b,
+.rx-body b {
   color: var(--brand);
+  font-weight: 600;
+}
+.rx-body {
+  margin: 0;
+  color: var(--text);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+.rx-vis {
+  margin-top: auto;
+  padding-top: 4px;
+}
+.rx-spark {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.rx-spark .sp-other {
+  fill: none;
+  stroke: #bdb6b0;
+  stroke-width: 2;
+}
+.rx-spark .sp-unit {
+  fill: none;
+  stroke: var(--brand);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.rx-spark .sp-x {
+  stroke: var(--text);
+  stroke-width: 1.6;
+}
+.rx-spark .sp-lead {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.rx-spark text {
+  font: 500 11px var(--body);
+  fill: var(--text);
+}
+.rx-spark text.sp-us {
+  font-weight: 600;
+  fill: var(--brand);
+}
+.rx-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rx-pill {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--text);
+  font: 600 12px/1.4 var(--heading);
+  white-space: nowrap;
+}
+.rx-pill.is-first {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--white);
+}
+.rx-key {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text);
+}
+.rx-more {
+  align-self: stretch;
+  margin-top: 2px;
+  padding: 14px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: none;
+  color: var(--brand);
+  font: 600 13.5px var(--body);
+  text-align: left;
+  cursor: pointer;
+}
+.rx-more:hover {
+  color: var(--ink);
+}
+.rx-more:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.rx-more .rx-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  transition: transform 0.25s;
+}
+.rx-more[aria-expanded='true'] .rx-arrow {
+  transform: rotate(90deg);
+}
+.rx-detail {
+  margin-top: 28px;
+  scroll-margin-top: 96px;
+}
+.rx-detail:not([hidden]) {
+  animation: rx-in 0.35s ease-out;
+}
+@keyframes rx-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.rx-detail > p {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 15px;
+}
+.rx-spark .sp-unit,
+.rx-spark .sp-other {
+  transition: stroke-dashoffset 1.2s ease-out;
+}
+@media (max-width: 900px) {
+  .rx-cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+  .rx-card {
+    padding: 22px 20px 18px;
+  }
+  .rx-claim {
+    font-size: 23px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rx-detail:not([hidden]) {
+    animation: none;
+  }
+  .rx-spark .sp-unit,
+  .rx-spark .sp-other {
+    transition: none;
+  }
 }
 .lh-legend {
   display: flex;

@@ -557,8 +557,7 @@
       });
       const more = h('p', 'an-more');
       const btn = h('a', '', 'Sequences of up to 500 frames: Results, Long horizon');
-      btn.href = '#results';
-      btn.addEventListener('click', () => document.getElementById('tab-e')?.click());
+      btn.href = '#rx-long';
       more.appendChild(btn);
       P.appendChild(more);
     }

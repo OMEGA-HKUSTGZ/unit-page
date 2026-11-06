@@ -1111,9 +1111,6 @@ class PointCloudViewer {
         // Measurement state
         this.measureMode = false;
         this.measurePoints = [];
-        this.measureMarkers = [];
-        this.measureLine = null;
-        this.measureLabel = null;
         this.raycaster = new THREE.Raycaster();
         this.raycaster.params.Points.threshold = 0.1;  // reset per scene at load
         this.mouse = new THREE.Vector2();
@@ -1299,9 +1296,15 @@ class PointCloudViewer {
     initMeasureUI() {
         this.measureBtn = document.getElementById('measure-btn');
         this.measureHintEl = document.getElementById('measure-hint');
+        const panel = this.canvas.parentElement;
+        this.measureSvg = panel.querySelector('.measure-overlay');
+        this.measureTag = panel.querySelector('.measure-tag');
         if (this.measureBtn) {
             this.measureBtn.addEventListener('click', () => this.toggleMeasureMode());
         }
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && this.measureMode) this.toggleMeasureMode();
+        });
         let downAt = null;
         this.canvas.addEventListener('pointerdown', e => {
             downAt = { x: e.clientX, y: e.clientY };
@@ -1316,24 +1319,24 @@ class PointCloudViewer {
         });
     }
 
+    // Status line inside the viewer: what to click next, then the result.
+    _setMeasureStatus(html) {
+        const el = this.measureHintEl;
+        if (!el) return;
+        el.hidden = !this.measureMode;
+        el.innerHTML = html;
+    }
+
     toggleMeasureMode() {
         this.measureMode = !this.measureMode;
         if (this.measureBtn) {
             this.measureBtn.classList.toggle('active', this.measureMode);
             this.measureBtn.setAttribute('aria-pressed', String(this.measureMode));
             this.measureBtn.title = this.measureMode
-                ? 'Measuring — click two points on the cloud (click here to exit)'
-                : 'Toggle distance measurement — click two points on the cloud to measure';
-            const labelEl = this.measureBtn.querySelector('.measure-label');
-            if (labelEl) {
-                labelEl.textContent = this.measureMode ? 'Measuring…' : 'Measure distance';
-            }
+                ? 'Stop measuring (Esc)'
+                : 'Measure the distance between two points';
         }
-        if (this.measureHintEl) {
-            this.measureHintEl.classList.toggle('visible', this.measureMode);
-            this.measureHintEl.textContent = 'Click two points to measure distance';
-        }
-        if (!this.measureMode) this.clearMeasurement();
+        this.clearMeasurement();
         this.canvas.style.cursor = this.measureMode ? 'crosshair' : '';
     }
 
@@ -1362,129 +1365,75 @@ class PointCloudViewer {
         const hits = this.raycaster.intersectObject(this.pointCloud);
         this.raycaster.params.Points.threshold = prevThreshold;
         // Raycaster returns the hit in world space. Convert to the point
-        // cloud's local frame so markers parented to `this.pointCloud`
-        // track the cloud when it rotates — otherwise a later drag leaves
-        // the markers floating at their original world position while the
-        // points they were anchored to move away.
+        // cloud's local frame so the measurement tracks the cloud when it
+        // rotates.
         if (hits.length > 0) {
             const local = this.pointCloud.worldToLocal(hits[0].point.clone());
             this.addMeasurePoint(local);
+        } else {
+            this._setMeasureStatus(this.measurePoints.length === 1
+                ? 'No point there. Click a second point on the cloud'
+                : 'No point there. Click a point on the cloud');
         }
     }
 
     addMeasurePoint(point) {
         if (this.measurePoints.length >= 2) this.clearMeasurement();
         this.measurePoints.push(point);
-
-        const r = Math.max(0.004, (this._sceneRadius || 1) * 0.010);
-        const core = new THREE.Mesh(
-            new THREE.SphereGeometry(r * 0.55, 16, 16),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false })
-        );
-        const halo = new THREE.Mesh(
-            new THREE.SphereGeometry(r, 16, 16),
-            new THREE.MeshBasicMaterial({ color: 0x8a5f5c, transparent: true, opacity: 0.55, depthTest: false })
-        );
-        core.position.copy(point);
-        halo.position.copy(point);
-        core.renderOrder = 1001;
-        halo.renderOrder = 1000;
-        this.pointCloud.add(halo);
-        this.pointCloud.add(core);
-        this.measureMarkers.push(halo, core);
-
         if (this.measurePoints.length === 2) {
-            this.drawMeasureLine();
-            this.showDistance();
+            const d = this.measurePoints[0].distanceTo(this.measurePoints[1]);
+            this._measureText = `${d >= 10 ? d.toFixed(1) : d.toFixed(2)} m`;
+            if (this.measureTag) this.measureTag.textContent = this._measureText;
+            this._setMeasureStatus(`<strong>${this._measureText}</strong><span>Click again to start over</span>`);
+        } else {
+            this._setMeasureStatus('Click a second point');
         }
-    }
-
-    drawMeasureLine() {
-        if (this.measureLine) {
-            this.measureLine.parent?.remove(this.measureLine);
-            this.measureLine.geometry.dispose();
-            this.measureLine.material.dispose();
-        }
-        const geometry = new THREE.BufferGeometry().setFromPoints(this.measurePoints);
-        const material = new THREE.LineBasicMaterial({
-            color: 0x8a5f5c, linewidth: 2, depthTest: false,
-            transparent: true, opacity: 0.85
-        });
-        this.measureLine = new THREE.Line(geometry, material);
-        this.measureLine.renderOrder = 999;
-        this.pointCloud.add(this.measureLine);
-    }
-
-    showDistance() {
-        const d = this.measurePoints[0].distanceTo(this.measurePoints[1]);
-        const formatted = d >= 10 ? d.toFixed(1) : d.toFixed(2);
-        if (this.measureHintEl) {
-            this.measureHintEl.textContent = `Distance: ${formatted} m`;
-        }
-
-        if (this.measureLabel) {
-            this.measureLabel.parent?.remove(this.measureLabel);
-            this.measureLabel.material.map?.dispose();
-            this.measureLabel.material.dispose();
-        }
-
-        const DPR = 2;
-        const canvas = document.createElement('canvas');
-        canvas.width = 320 * DPR;
-        canvas.height = 96 * DPR;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(DPR, DPR);
-        const w = 320, h = 96;
-        const pad = 14, radius = 20;
-        const boxW = w - pad * 2, boxH = h - pad * 2;
-        ctx.fillStyle = 'rgba(138, 95, 92, 0.95)';
-        ctx.beginPath();
-        ctx.roundRect(pad, pad, boxW, boxH, radius);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '600 42px "Space Grotesk Variable", "Inter Variable", Arial, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${formatted} m`, w / 2, h / 2 + 2);
-
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.minFilter = THREE.LinearFilter;
-        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
-        this.measureLabel = new THREE.Sprite(mat);
-        const mid = new THREE.Vector3().addVectors(this.measurePoints[0], this.measurePoints[1]).multiplyScalar(0.5);
-        mid.y += (this._sceneRadius || 1) * 0.06;
-        this.measureLabel.position.copy(mid);
-        const s = (this._sceneRadius || 1) * 0.18;
-        this.measureLabel.scale.set(s, s * (96 / 320), 1);
-        this.measureLabel.renderOrder = 1002;
-        this.pointCloud.add(this.measureLabel);
+        this._updateMeasureOverlay();
     }
 
     clearMeasurement() {
-        this.measureMarkers.forEach(m => {
-            m.parent?.remove(m);
-            m.geometry.dispose();
-            m.material.dispose();
-        });
-        this.measureMarkers = [];
-        if (this.measureLine) {
-            this.measureLine.parent?.remove(this.measureLine);
-            this.measureLine.geometry.dispose();
-            this.measureLine.material.dispose();
-            this.measureLine = null;
-        }
-        if (this.measureLabel) {
-            this.measureLabel.parent?.remove(this.measureLabel);
-            this.measureLabel.material.map?.dispose();
-            this.measureLabel.material.dispose();
-            this.measureLabel = null;
-        }
         this.measurePoints = [];
-        if (this.measureHintEl && this.measureMode) {
-            this.measureHintEl.textContent = 'Click two points to measure distance';
+        this._measureText = '';
+        this._setMeasureStatus('Click a point on the cloud');
+        this._updateMeasureOverlay();
+    }
+
+    // Draw the measurement as a 2D overlay projected from the cloud every
+    // frame, so dots, line and label keep one size on screen at any zoom.
+    _updateMeasureOverlay() {
+        const svg = this.measureSvg;
+        if (!svg) return;
+        const pts = this.measurePoints;
+        const circles = svg.querySelectorAll('.mo-pt');
+        const lines = svg.querySelectorAll('line');
+        const W = this.canvas.clientWidth;
+        const H = this.canvas.clientHeight;
+        const scr = pts.map(p => {
+            if (!this.pointCloud || !this.camera) return null;
+            const v = this.pointCloud.localToWorld(p.clone()).project(this.camera);
+            if (v.z > 1 || v.z < -1) return null;
+            return [(v.x + 1) / 2 * W, (1 - v.y) / 2 * H];
+        });
+        circles.forEach((c, i) => {
+            const s = scr[i];
+            c.style.display = s ? '' : 'none';
+            if (s) { c.setAttribute('cx', s[0].toFixed(1)); c.setAttribute('cy', s[1].toFixed(1)); }
+        });
+        const both = scr.length === 2 && scr[0] && scr[1];
+        lines.forEach(l => {
+            l.style.display = both ? '' : 'none';
+            if (both) {
+                l.setAttribute('x1', scr[0][0].toFixed(1)); l.setAttribute('y1', scr[0][1].toFixed(1));
+                l.setAttribute('x2', scr[1][0].toFixed(1)); l.setAttribute('y2', scr[1][1].toFixed(1));
+            }
+        });
+        if (this.measureTag) {
+            this.measureTag.hidden = !both;
+            if (both) {
+                const x = (scr[0][0] + scr[1][0]) / 2;
+                const y = (scr[0][1] + scr[1][1]) / 2;
+                this.measureTag.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -150%)`;
+            }
         }
     }
 
@@ -2491,6 +2440,7 @@ class PointCloudViewer {
         }
         this.controls.update();
         this.renderer.render(this.scene, this.camera);
+        if (this.measurePoints.length) this._updateMeasureOverlay();
         this._rafId = requestAnimationFrame(() => this.animate());
     }
 }
@@ -2531,6 +2481,19 @@ class ViewerControls {
         this.toggle.addEventListener('click', () => this._togglePanel());
         const closeBtn = document.getElementById('controls-close');
         if (closeBtn) closeBtn.addEventListener('click', () => this._togglePanel(false));
+        // Fill each slider's track up to its thumb.
+        this.panel.addEventListener('input', (e) => {
+            if (e.target.type === 'range') this._paintRange(e.target);
+        });
+    }
+
+    _paintRange(el) {
+        const min = parseFloat(el.min), max = parseFloat(el.max), v = parseFloat(el.value);
+        el.style.setProperty('--p', `${(((v - min) / (max - min)) * 100).toFixed(1)}%`);
+    }
+
+    _paintAll() {
+        this.panel.querySelectorAll('input[type="range"]').forEach((el) => this._paintRange(el));
     }
 
     _onViewerRotated(rot) {
@@ -2543,6 +2506,7 @@ class ViewerControls {
         set('ctrl-rot-y', 'ctrl-rot-y-val', rot.y);
         set('ctrl-rot-z', 'ctrl-rot-z-val', rot.z);
         this._persist({ rotation: { x: rot.x, y: rot.y, z: rot.z } });
+        this._paintAll();
     }
 
     // Called by initDemo before `viewer.show()`.  Merges baked config
@@ -2662,6 +2626,7 @@ class ViewerControls {
         set('ctrl-rot-y', 'ctrl-rot-y-val', rot.y || 0, (v) => v + '°');
         set('ctrl-rot-z', 'ctrl-rot-z-val', rot.z || 0, (v) => v + '°');
 
+        this._paintAll();
         const bgRow = this._$('ctrl-bg-swatches');
         if (bgRow) {
             const current = (cfg.background || '#ffffff').toLowerCase();
