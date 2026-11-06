@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261107k" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261107q" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -238,24 +238,33 @@
             </p>
           </div>
           <p class="demo-hint">
-            Drag to rotate, scroll or pinch to zoom, and switch scenes with the thumbnails. Use
-            <strong>📏 Measure distance</strong> to check the real-world distance between any two points.
+            Drag to rotate, scroll or pinch to zoom, and switch scenes with the thumbnails. Turn on
+            <strong>Measure</strong> to check the real-world distance between any two points.
           </p>
-          <p id="measure-hint" class="measure-hint" role="status">Click two points to measure distance</p>
           <div class="demo-ply-panel">
             <div id="demo-message">Click a thumbnail to load the point cloud.</div>
-            <button type="button" id="measure-btn" class="measure-button" title="Toggle distance measurement: click two points on the cloud to measure" aria-label="Toggle distance measurement" aria-pressed="false">
-              <span class="measure-icon" aria-hidden="true">📏</span>
-              <span class="measure-label">Measure distance</span>
-            </button>
-            <button type="button" id="controls-toggle-btn" class="controls-toggle" title="Open view controls" aria-label="Open view controls" aria-expanded="false" aria-controls="demo-controls-panel">⚙</button>
+            <div class="demo-tools" role="toolbar" aria-label="Viewer tools">
+              <button type="button" id="measure-btn" class="tool-btn measure-button" title="Measure the distance between two points" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 15.5 15.5 3.5l5 5-12 12z" /><path d="M6 13l2.5 2.5M8.5 10.5l1.5 1.5M11 8l2.5 2.5M13.5 5.5l1.5 1.5" /></svg>
+                <span class="measure-label">Measure</span>
+              </button>
+              <button type="button" id="controls-toggle-btn" class="tool-btn controls-toggle" title="View settings" aria-label="View settings" aria-expanded="false" aria-controls="demo-controls-panel">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9" /><circle cx="15" cy="7" r="2" /><circle cx="9" cy="17" r="2" /></svg>
+              </button>
+            </div>
+            <p id="measure-hint" class="measure-status" role="status" hidden></p>
+            <svg class="measure-overlay" aria-hidden="true">
+              <line class="mo-case" /><line class="mo-line" />
+              <circle class="mo-pt" r="6" /><circle class="mo-pt" r="6" />
+            </svg>
+            <span class="measure-tag" aria-hidden="true" hidden></span>
             <button type="button" id="detail-btn" class="detail-button" hidden><span class="detail-count"></span><span class="detail-act"></span></button>
             <canvas id="demo-canvas" aria-label="Interactive 3D point cloud"></canvas>
 
-            <aside id="demo-controls-panel" class="demo-controls-panel" aria-label="View controls">
+            <aside id="demo-controls-panel" class="demo-controls-panel" aria-label="View settings">
               <div class="controls-header">
-                <span>View controls</span>
-                <button type="button" id="controls-close" aria-label="Close view controls">×</button>
+                <span>View settings</span>
+                <button type="button" id="controls-close" aria-label="Close view settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
               </div>
               <div class="controls-body">
                 <div class="control-group">
@@ -400,13 +409,13 @@
             <dt>Tasks</dt><dd>7</dd>
             <dd class="stat-items">
               <ul>
-                <li><a href="#tab-a" data-open-tab="tab-a">Multi-view reconstruction</a></li>
-                <li><a href="#tab-b" data-open-tab="tab-b">Camera pose</a></li>
-                <li><a href="#tab-c" data-open-tab="tab-c">Video depth</a></li>
-                <li><a href="#tab-d" data-open-tab="tab-d">Monocular depth</a></li>
-                <li><a href="#tab-e" data-open-tab="tab-e">Long horizon</a></li>
-                <li><a href="#tab-f" data-open-tab="tab-f">Multi-modal</a></li>
-                <li><a href="#tab-g" data-open-tab="tab-g">Depth completion</a></li>
+                <li><a href="#radar">Multi-view reconstruction</a></li>
+                <li><a href="#radar">Camera pose</a></li>
+                <li><a href="#radar">Video depth</a></li>
+                <li><a href="#radar">Monocular depth</a></li>
+                <li><a href="#rx-long">Long horizon</a></li>
+                <li><a href="#rx-modal">Multi-modal</a></li>
+                <li><a href="#rx-sparse">Depth completion</a></li>
               </ul>
             </dd>
           </div>
@@ -425,87 +434,56 @@
           </div>
         </dl>
 
-        <figure class="radar" data-radar aria-label="Benchmark radar"></figure>
-
-        <div class="tabs" data-tabs>
-          <div class="tab-list" role="tablist" aria-label="Result tasks">
-            <button role="tab" id="tab-a" aria-controls="panel-a" aria-selected="true">Multi-view reconstruction</button>
-            <button role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" tabindex="-1">Camera pose</button>
-            <button role="tab" id="tab-c" aria-controls="panel-c" aria-selected="false" tabindex="-1">Video depth</button>
-            <button role="tab" id="tab-d" aria-controls="panel-d" aria-selected="false" tabindex="-1">Monocular depth</button>
-            <button role="tab" id="tab-e" aria-controls="panel-e" aria-selected="false" tabindex="-1">Long horizon</button>
-            <button role="tab" id="tab-f" aria-controls="panel-f" aria-selected="false" tabindex="-1">Multi-modal</button>
-            <button role="tab" id="tab-g" aria-controls="panel-g" aria-selected="false" tabindex="-1">Depth completion</button>
-          </div>
-
-          <div role="tabpanel" id="panel-a" aria-labelledby="tab-a" class="tab-panel">
-            <p>Scene-level 7-Scenes and NRGBD, and object-centric DTU.</p>
-            <div class="rchart" data-chart="reconstruction"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." /></figure>
-            </details>
-          </div>
-          <div role="tabpanel" id="panel-b" aria-labelledby="tab-b" class="tab-panel" hidden>
-            <p>Synthetic outdoor Sintel, and real-world indoor TUM-Dynamic and ScanNetV2.</p>
-            <div class="rchart" data-chart="pose"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." /></figure>
-            </details>
-          </div>
-          <div role="tabpanel" id="panel-c" aria-labelledby="tab-c" class="tab-panel" hidden>
-            <p>Sintel, and real-world Bonn and ETH3D.</p>
-            <div class="rchart" data-chart="videoDepth"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." /></figure>
-            </details>
-          </div>
-          <div role="tabpanel" id="panel-d" aria-labelledby="tab-d" class="tab-panel" hidden>
-            <p>Sintel, KITTI and NYUv2.</p>
-            <div class="rchart" data-chart="monoDepth"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." /></figure>
-            </details>
-          </div>
-          <div role="tabpanel" id="panel-e" aria-labelledby="tab-e" class="tab-panel" hidden>
-            <p>NRGBD with sequence lengths from 50 to 500 frames, in steps of 50.</p>
-            <div class="lh" data-longhorizon>
-              <div class="pair">
-                <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
-                <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
-              </div>
-            </div>
-            <h3 class="rc-subhead">Speed and memory</h3>
-            <div data-complexity></div>
-          </div>
-          <div role="tabpanel" id="panel-f" aria-labelledby="tab-f" class="tab-panel" hidden>
-            <p>Arbitrary combinations of depth maps, intrinsics and extrinsics on 7-Scenes, ETH3D and ScanNetV2.</p>
-            <div class="rchart" data-chart="multiModal"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." /></figure>
-            </details>
-          </div>
-          <div role="tabpanel" id="panel-g" aria-labelledby="tab-g" class="tab-panel" hidden>
-            <p>Raw depth maps with four sparse patterns on Sintel, KITTI and NYUv2.</p>
-            <div class="rchart" data-chart="depthCompletion"></div>
-            <details class="paper-table">
-              <summary>Show the table from the paper</summary>
-              <figure class="media-frame"><img src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." /></figure>
-            </details>
-          </div>
+        <figure class="radar" id="radar" data-radar aria-label="Benchmark radar"></figure>
+        <div class="media-frame" hidden>
+          <img data-table-img="reconstruction" src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." />
+          <img data-table-img="pose" src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." />
+          <img data-table-img="videoDepth" src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." />
+          <img data-table-img="monoDepth" src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." />
+          <img data-table-img="multiModal" src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." />
+          <img data-table-img="depthCompletion" src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." />
         </div>
 
-        <figure class="media-frame qualitative">
-          <img src="assets/media/results/fig8-qualitative.jpg" width="1770" height="720" loading="lazy" alt="Figure 8: qualitative multi-view reconstructions compared with ground truth, shown without alignment or filtering." />
-          <figcaption>
-            <strong>Fig. 8.</strong> Qualitative multi-view reconstruction. Point clouds are shown raw, without alignment or
-            filtering; each row uses a consistent scene scale.
-          </figcaption>
-        </figure>
+        <div class="rx-intro">
+          <h3>Beyond the four core tasks</h3>
+          <p>Three settings most models can't handle: very long sequences, extra sensor inputs, and sparse depth.</p>
+        </div>
+
+        <div class="rx-cards">
+          <article class="rx-card" id="rx-long">
+            <p class="rx-eyebrow">Long horizon</p>
+            <h4 class="rx-claim">Still accurate at <b>500 frames</b></h4>
+            <p class="rx-body">At 500 frames on NRGBD its pose error is <b>2.9×</b> lower than CUT3R's. DepthAnything3 runs out of memory at 300.</p>
+            <div class="rx-vis" data-spark></div>
+            <button type="button" class="rx-more" aria-expanded="false" aria-controls="rx-long-detail">See the curves, speed and memory<span class="rx-arrow" aria-hidden="true">→</span></button>
+          </article>
+          <article class="rx-card" id="rx-modal">
+            <p class="rx-eyebrow">Multi-modal input</p>
+            <h4 class="rx-claim"><b>#1</b> in 5 of 7 input combinations</h4>
+            <p class="rx-body">Give it intrinsics, camera poses or depth, alone or combined. UniT uses whatever is available and never places below 2nd.</p>
+            <div class="rx-vis" data-pills="multiModal"></div>
+            <button type="button" class="rx-more" data-open-table="multiModal">Table 7 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
+          </article>
+          <article class="rx-card" id="rx-sparse">
+            <p class="rx-eyebrow">Depth completion</p>
+            <h4 class="rx-claim"><b>#1</b> on all 4 sparse patterns</h4>
+            <p class="rx-body">Random points, LiDAR beams, SfM points or a coarse grid: UniT fills in dense depth best in every case.</p>
+            <div class="rx-vis" data-pills="depthCompletion"></div>
+            <button type="button" class="rx-more" data-open-table="depthCompletion">Table 8 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
+          </article>
+        </div>
+
+        <div class="rx-detail" id="rx-long-detail" hidden>
+          <p>NRGBD, from 50 to 500 frames in steps of 50. Point at a chart to read the values.</p>
+          <div class="lh" data-longhorizon>
+            <div class="pair">
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
+            </div>
+          </div>
+          <h3 class="rc-subhead">Speed and memory</h3>
+          <div data-complexity></div>
+        </div>
       </section>
 
       <section class="section container" id="analysis">
@@ -613,14 +591,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/main.js?v=20261107k" defer></script>
-    <script src="assets/js/method.js?v=20261107k" defer></script>
-    <script src="assets/js/results-data.js?v=20261107k" defer></script>
-    <script src="assets/js/longhorizon-data.js?v=20261107k" defer></script>
-    <script src="assets/js/results.js?v=20261107k" defer></script>
-    <script src="assets/js/radar.js?v=20261107k" defer></script>
-    <script src="assets/js/analysis-data.js?v=20261107k" defer></script>
-    <script src="assets/js/analysis.js?v=20261107k" defer></script>
-    <script src="assets/js/viewer.js?v=20261107k" defer></script>
+    <script src="assets/js/main.js?v=20261107q" defer></script>
+    <script src="assets/js/method.js?v=20261107q" defer></script>
+    <script src="assets/js/results-data.js?v=20261107q" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261107q" defer></script>
+    <script src="assets/js/results.js?v=20261107q" defer></script>
+    <script src="assets/js/radar.js?v=20261107q" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261107q" defer></script>
+    <script src="assets/js/analysis.js?v=20261107q" defer></script>
+    <script src="assets/js/viewer.js?v=20261107q" defer></script>
   </body>
 </html>
