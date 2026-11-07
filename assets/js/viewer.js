@@ -159,10 +159,16 @@ function initDeferredDemo() {
 //   brightness    — vertex-colour multiplier
 //   background    — canvas clear colour
 //   rotation      — extra Euler angles (degrees, XYZ) on the cloud
+// The six v1 paths in unit-media are frozen. New bytes require a new path;
+// the query identifies this release for browser/IndexedDB cache isolation.
+const POINT_CLOUD_BASE = '../../unit-media/point-clouds/';
+const POINT_CLOUD_VERSION = '0e1438880f2957264dab2b617f9d36d15db4d9ec';
+const pointCloudUrl = (scene) => `${POINT_CLOUD_BASE}${scene}.pnts?v=${POINT_CLOUD_VERSION}`;
+
 const DEMO_CONFIGS = {
     hkust_intr: {
         title: "HKUST (GZ) INTR",
-        cloud: 'assets/media/point-clouds/hkust_intr.pnts',
+        cloud: pointCloudUrl('hkust_intr'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.6319618076660898, y: 0.3153347261155949, z: -1.4732851957859752 },
@@ -173,7 +179,7 @@ const DEMO_CONFIGS = {
     },
     hkust_toy: {
         title: "HKUST (GZ) Toy",
-        cloud: 'assets/media/point-clouds/hkust_toy.pnts',
+        cloud: pointCloudUrl('hkust_toy'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.6901299380940393, y: 0.34435931471359005, z: -1.6088918802192318 },
@@ -184,7 +190,7 @@ const DEMO_CONFIGS = {
     },
     hkust_redbird: {
         title: "HKUST (GZ) Red Bird",
-        cloud: 'assets/media/point-clouds/hkust_redbird.pnts',
+        cloud: pointCloudUrl('hkust_redbird'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.45103204678001235, y: 0.3153347261155385, z: -1.4435610207830187 },
@@ -195,7 +201,7 @@ const DEMO_CONFIGS = {
     },
     drift: {
         title: "Drift",
-        cloud: 'assets/media/point-clouds/drift.pnts',
+        cloud: pointCloudUrl('drift'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.39666836040233505, y: 0.39666836040233494, z: -1.1900050812070047 },
@@ -206,7 +212,7 @@ const DEMO_CONFIGS = {
     },
     gta_sfm: {
         title: "GTA SfM",
-        cloud: 'assets/media/point-clouds/gta_sfm.pnts',
+        cloud: pointCloudUrl('gta_sfm'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.46654031199883444, y: 0.23262397828196726, z: -1.6322449142784692 },
@@ -217,7 +223,7 @@ const DEMO_CONFIGS = {
     },
     kitti: {
         title: "KITTI",
-        cloud: 'assets/media/point-clouds/kitti.pnts',
+        cloud: pointCloudUrl('kitti'),
         pointSize: 1e-06,
         flipY: true,
         camera: { x: -0.4189952357359402, y: 0.6135287380419124, z: -1.3943834955498005 },
@@ -228,8 +234,8 @@ const DEMO_CONFIGS = {
     }
 };
 
-const CACHE_NAME = 'unit-pnt-v13';
-const PNTS_DB_NAME = 'unit-pnts-v13';
+const CACHE_NAME = 'unit-pnt-v14';
+const PNTS_DB_NAME = 'unit-pnts-v14';
 
 const FIRST_PAINT_VISIBLE_POINTS = 786_432;
 const CHUNK_FETCH_WINDOW = 4;
@@ -338,7 +344,11 @@ async function initDemo() {
     }
     await ensureDemoDependencies();
 
-    const loader = new PntsLoader(PNTS_DB_NAME);
+    // A basic local file server may ignore Range. Opt in explicitly for that
+    // preview only; production must never silently download a whole scene.
+    const allowFullFile = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) &&
+        new URLSearchParams(location.search).get('full-file-preview') === '1';
+    const loader = new PntsLoader(PNTS_DB_NAME, { allowFullFile });
     const viewer = new PointCloudViewer(canvas, messageEl, loader);
     const thumbs = Array.from(document.querySelectorAll('.demo-thumb'));
     const controls = new ViewerControls(viewer);
@@ -744,9 +754,11 @@ class PntsChunkStore {
 }
 
 class PntsLoader {
-    constructor(dbName) {
+    constructor(dbName, { allowFullFile = false } = {}) {
         this.store = new PntsChunkStore(dbName);
         this.fullFileCache = new Map();
+        this.fileSizes = new Map();
+        this.allowFullFile = allowFullFile;
     }
 
     estimateCacheBytes(maxAgeMs) {
@@ -771,6 +783,22 @@ class PntsLoader {
         return full.slice(start, end + 1);
     }
 
+    async _validateRangeResponse(resp, start, end, url) {
+        const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(resp.headers.get('Content-Range') || '');
+        const length = resp.headers.get('Content-Length');
+        const encoding = resp.headers.get('Content-Encoding');
+        const previousSize = this.fileSizes.get(url);
+        if (resp.status !== 206 || !match || Number(match[1]) !== start || Number(match[2]) !== end ||
+            !Number.isSafeInteger(Number(match[3])) || Number(match[3]) <= end ||
+            (previousSize != null && previousSize !== Number(match[3])) ||
+            (length != null && Number(length) !== end - start + 1) ||
+            (encoding && encoding !== 'identity')) {
+            await resp.body?.cancel().catch(() => {});
+            throw new Error(`Invalid point-cloud Range response (${resp.status}) for ${start}-${end}: ${url}`);
+        }
+        this.fileSizes.set(url, Number(match[3]));
+    }
+
     async _fetchRange(url, start, end, signal, onBytes) {
         const cachedFull = this._sliceFullFile(url, start, end);
         if (cachedFull) return cachedFull;
@@ -780,18 +808,17 @@ class PntsLoader {
             priority: 'high',
             headers: { Range: `bytes=${start}-${end}` },
         });
-        if (resp.status === 200) {
+        if (resp.status === 200 && this.allowFullFile) {
             const full = this._rememberFullFile(url, new Uint8Array(await resp.arrayBuffer()));
             if (onBytes) onBytes(full.byteLength);
             const slice = this._sliceFullFile(url, start, end);
             if (slice) return slice;
             throw new Error(`Full response too small for requested range ${start}-${end}: ${url}`);
         }
-        if (resp.status !== 206) {
-            throw new Error(`Range request failed (${resp.status}) for ${url}`);
-        }
+        await this._validateRangeResponse(resp, start, end, url);
         if (!resp.body) {
             const arr = new Uint8Array(await resp.arrayBuffer());
+            if (arr.byteLength !== end - start + 1) throw new Error(`Incomplete point-cloud range: ${url}`);
             if (onBytes) onBytes(arr.byteLength);
             return arr;
         }
@@ -812,6 +839,8 @@ class PntsLoader {
         } finally {
             if (signal) signal.removeEventListener('abort', abortReader);
         }
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+        if (total !== end - start + 1) throw new Error(`Incomplete point-cloud range: ${url}`);
         return concatUint8(parts, total);
     }
 
@@ -870,6 +899,11 @@ class PntsLoader {
             bytes = await this._fetchRange(url, 0, manifest.needBytes - 1, signal, onBytes);
             manifest = this.parseManifest(bytes, url);
         }
+        const last = manifest.chunks.at(-1);
+        const total = this.fileSizes.get(url);
+        if (total != null && (!last || last.offset + last.compressedSize !== total)) {
+            throw new Error(`Point-cloud index does not match file length: ${url}`);
+        }
         return manifest;
     }
 
@@ -909,7 +943,7 @@ class PntsLoader {
             priority: 'high',
             headers: { Range: `bytes=${start}-${end}` },
         });
-        if (resp.status === 200) {
+        if (resp.status === 200 && this.allowFullFile) {
             const full = this._rememberFullFile(state.url, new Uint8Array(await resp.arrayBuffer()));
             state.networkBytes += full.byteLength;
             if (onBytes) onBytes(full.byteLength);
@@ -919,7 +953,7 @@ class PntsLoader {
             await this.store.put(state.url, index, bytes);
             return { bytes, fromCache: false };
         }
-        if (resp.status !== 206) throw new Error(`Chunk range failed (${resp.status}) for ${state.url}`);
+        await this._validateRangeResponse(resp, start, end, state.url);
         if (!resp.body) {
             const bytes = new Uint8Array(await resp.arrayBuffer());
             parts.push(bytes);
@@ -947,8 +981,9 @@ class PntsLoader {
         }
 
         if (length !== chunk.compressedSize) {
-            state.partialChunks.set(index, { parts, length });
-            throw new DOMException('Aborted', 'AbortError');
+            if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+            state.partialChunks.delete(index);
+            throw new Error(`Incomplete point-cloud chunk ${index}: ${state.url}`);
         }
         const bytes = concatUint8(parts, length);
         state.partialChunks.delete(index);
