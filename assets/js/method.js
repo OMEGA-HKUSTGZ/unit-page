@@ -20,6 +20,8 @@
       text: 'One frame per step. Each frame attends to itself and to the frames still in the KV cache.' },
     { G: 2, label: 'G = 2', name: 'Stereo', title: 'Synchronized pairs', mask: 'group causal mask',
       text: 'Two views per step, bidirectional within the pair and causal across pairs, as for a stereo rig.' },
+    { G: 3, label: 'G = 3', name: 'Triple', title: 'Synchronized triples', mask: 'group causal mask',
+      text: 'Three views per step, bidirectional within the group and causal across groups. With N = 4, the last group here holds the one remaining frame.' },
     { G: N, label: 'G = N', name: 'Offline', title: 'Offline reconstruction', mask: 'null mask',
       text: 'All frames in a single step with full attention, like a multi-view model. Nothing needs caching.' },
   ];
@@ -42,7 +44,9 @@
 
   const ui = { mode: 1, step: 0, timer: null, started: false };
   const mode = () => MODES[ui.mode];
-  const steps = () => N / mode().G;
+  // G need not divide N: the last group is then shorter (G = 3 gives 1–3 and 4).
+  const steps = () => Math.ceil(N / mode().G);
+  const groupLen = (s) => Math.min(mode().G, N - s * mode().G);
   const groupOf = (i) => Math.floor(i / mode().G);
   // Frames held in the KV cache when group s is computed: the last Q earlier frames.
   const cacheAt = (s) => {
@@ -197,7 +201,7 @@
       b.classList.toggle('is-on', on);
       b.classList.toggle('is-now', on && i === s);
       b.style.setProperty('--i', (on ? i : S - 1) * m.G);
-      b.style.setProperty('--n', m.G);
+      b.style.setProperty('--n', groupLen(on ? i : S - 1));
     });
     colThumbs.forEach((t, i) => t.classList.toggle('is-now', groupOf(i) === s));
     rowThumbs.forEach((t, i) => {
@@ -218,11 +222,11 @@
       c.classList.toggle('is-now', gq === s);
     });
     band.style.setProperty('--i', s * m.G);
-    band.style.setProperty('--n', m.G);
+    band.style.setProperty('--n', groupLen(s));
 
     // Step control.
     const first = s * m.G + 1;
-    const last = (s + 1) * m.G;
+    const last = s * m.G + groupLen(s);
     stepNum.innerHTML = `<strong>${s + 1}</strong> / ${S}<span class="gx-stepframes">${first === last ? `frame ${first}` : `frames ${first}–${last}`}</span>`;
     dotEls.forEach((d, i) => {
       d.classList.toggle('is-on', i < S);
