@@ -101,14 +101,17 @@ test('an aborted header request remains an AbortError', async () => {
   await assert.rejects(loader._fetchRange('/cloud.pnts', 0, 3, controller.signal), { name: 'AbortError' });
 });
 
-test('six scene URLs retain same-origin routing and mobile chunk budget', () => {
+test('six scene URLs reach the media site from every published depth; mobile chunk budget', () => {
   const { DEMO_CONFIGS, PointCloudViewer } = harness(() => {});
   assert.equal(Object.keys(DEMO_CONFIGS).length, 6);
-  for (const [scene, cfg] of Object.entries(DEMO_CONFIGS)) {
-    const url = new URL(cfg.cloud, 'https://omega-hkustgz.github.io/projects/unit/');
-    assert.equal(url.origin, 'https://omega-hkustgz.github.io');
-    assert.equal(url.pathname, `/unit-media/point-clouds/${scene}.pnts`);
-    assert.equal(url.searchParams.get('v'), '0e1438880f2957264dab2b617f9d36d15db4d9ec');
+  // The lab site, a lab-site pull-request preview and this page's own preview.
+  for (const page of ['/projects/unit/', '/preview/site-pr-20/projects/unit/', '/preview/unit-pr-11/']) {
+    for (const [scene, cfg] of Object.entries(DEMO_CONFIGS)) {
+      const url = new URL(cfg.cloud, `https://omega-hkustgz.github.io${page}`);
+      assert.equal(url.origin, 'https://omega-hkustgz.github.io');
+      assert.equal(url.pathname, `/unit-media/point-clouds/${scene}.pnts`, page);
+      assert.equal(url.searchParams.get('v'), '0e1438880f2957264dab2b617f9d36d15db4d9ec');
+    }
   }
   const scene = { manifest: { count: 7_043_505, chunkCount: 108,
     chunks: Array.from({ length: 108 }, (_, i) => ({ firstPoint: i * 65_536 })) } };

@@ -149,7 +149,7 @@ function initDeferredDemo() {
 // per-scene initial views; there is no runtime config fetch.
 //
 // Fields:
-//   cloud         — chunk-indexed .pnts path (same origin, Range-capable)
+//   cloud         — chunk-indexed .pnts address (same origin, Range-capable)
 //   pointSize     — splat size in world units (the viewer clamps to a
 //                   minimum on-screen size, so 1e-6 means 'smallest')
 //   flipY         — negate Y after centring
@@ -161,7 +161,12 @@ function initDeferredDemo() {
 //   rotation      — extra Euler angles (degrees, XYZ) on the cloud
 // The six v1 paths in unit-media are frozen. New bytes require a new path;
 // the query identifies this release for browser/IndexedDB cache isolation.
-const POINT_CLOUD_BASE = '../../unit-media/point-clouds/';
+// unit-media is its own Pages site at the root of this origin. The page is
+// served at more than one depth (/projects/unit/ on the lab site,
+// /preview/site-pr-N/projects/unit/ in the lab site's pull-request previews,
+// /preview/unit-pr-N/ in this page's own), so the address is root-relative:
+// a path relative to the page resolves to the media site at one depth only.
+const POINT_CLOUD_BASE = '/unit-media/point-clouds/';
 const POINT_CLOUD_VERSION = '0e1438880f2957264dab2b617f9d36d15db4d9ec';
 const pointCloudUrl = (scene) => `${POINT_CLOUD_BASE}${scene}.pnts?v=${POINT_CLOUD_VERSION}`;
 

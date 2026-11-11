@@ -9,34 +9,34 @@ Project page for **UniT: Unified Geometry Learning with Group Autoregressive Tra
 
 ## Deployment
 
-A static page with no build step. It is published with the lab site at <https://omega-hkustgz.github.io/projects/unit/> by the site's deploy workflow (re-run it in `OMEGA-HKUSTGZ/omega-lab-site` after changing this page); header and breadcrumb links use relative paths (`../../`) back to the lab site, so keep that depth if the path changes.
+A static page with no build step. It is published with the lab site at <https://omega-hkustgz.github.io/projects/unit/>: a push to `main` asks `OMEGA-HKUSTGZ/omega-lab-site` to republish; header and breadcrumb links use relative paths (`../../`) back to the lab site, so keep that depth if the path changes.
 
-Run the same checks as CI before publishing:
+Run the same check as CI before publishing:
 
 ```sh
 node tools/check.mjs
-node tools/verify-point-cloud-host.mjs
 ```
 
-The second command compares small head/middle/tail Range responses from the
-published media with the retained originals. The publish workflow runs both
-checks before notifying the lab site, so a missing or incompatible media source
-cannot silently become a new page dependency.
+It parses the scripts, runs the loader tests and compares small head/middle/tail Range
+responses from the published media with the retained originals (`--offline` skips that last
+step). The publish workflow runs it before notifying the lab site, so a missing or
+incompatible media source cannot silently become a new page dependency.
 
-Preview locally from a directory that mirrors both deployed paths:
+Preview locally:
 
 ```sh
-mkdir -p /tmp/omega-preview/omega/projects /tmp/omega-preview/omega/unit-media
-ln -s "$PWD" /tmp/omega-preview/omega/projects/unit
-ln -s "$PWD/assets/media/point-clouds" /tmp/omega-preview/omega/unit-media/point-clouds
-python3 -m http.server 4390 --directory /tmp/omega-preview
-# open http://127.0.0.1:4390/omega/projects/unit/?full-file-preview=1
+node tools/serve.mjs            # http://127.0.0.1:4390/projects/unit/
+node tools/serve.mjs 4390 /preview/site-pr-1/projects/unit/   # the depth of a lab-site preview
 ```
 
-The viewer requires validated HTTP Range responses in production. Python's
-basic server ignores Range, so whole-file fallback is permitted only on loopback
-with the explicit `full-file-preview=1` option. This is a visual preview, not a
-Range acceptance test. Use a Range-capable server for streaming regression checks.
+The server answers HTTP Range, which the viewer requires, and serves the point clouds at
+`/unit-media/point-clouds/` the way the media site does. A server that ignores Range (such as
+`python3 -m http.server`) needs `?full-file-preview=1`, which is permitted only on loopback and
+is a visual preview, not a Range acceptance test.
+
+Every pull request gets a preview at `https://omega-hkustgz.github.io/preview/unit-pr-<number>/`
+(not indexed, removed when the pull request closes). The lab site's own pull-request previews
+serve this page at `/preview/site-pr-<number>/projects/unit/`.
 
 The published page is indexable and uses the lab's official project URL as its canonical address. Link previews use the existing introduction poster.
 
@@ -45,7 +45,7 @@ The published page is indexable and uses the lab's official project URL as its c
 - Video, figures and example clips come from the original UniT project page. The intro video is re-encoded to 720p H.264 for faster loading.
 - Colors, typography and the Ω mark mirror `omega-lab-site` (`src/styles/global.css`, `public/images/brand/omega-mark.svg`). Update both together.
 - Fonts: Inter, Space Grotesk and Source Serif 4 (SIL Open Font License; see `assets/fonts/`). They are self-hosted so the page does not depend on Google Fonts.
-- Interactive point clouds: six scenes, 180,977,460 bytes (172.59 MiB), served by the existing [unit-media Pages](https://omega-hkustgz.github.io/unit-media/) at `../../unit-media/point-clouds/<scene>.pnts?v=0e1438880f2957264dab2b617f9d36d15db4d9ec`. These v1 paths are frozen; the query isolates caches but is not a substitute for immutability. Future data must use a new versioned path. Their source copies stay in `assets/media/point-clouds/` for verification and rollback; the lab publisher excludes that directory from `dist`. This shrinks publication, but does not remove the current source-clone download. Do not move them to Git LFS. Only the selected scene is loaded when Examples enters view.
+- Interactive point clouds: six scenes, 180,977,460 bytes (172.59 MiB), served by the existing [unit-media Pages](https://omega-hkustgz.github.io/unit-media/) at `/unit-media/point-clouds/<scene>.pnts?v=0e1438880f2957264dab2b617f9d36d15db4d9ec`. The address is root-relative because the page is published at several depths (the lab site, its pull-request previews, this page's own previews); a path relative to the page reaches the media site from one depth only. These v1 paths are frozen; the query isolates caches but is not a substitute for immutability. Future data must use a new versioned path. Their source copies stay in `assets/media/point-clouds/` for verification and rollback; the lab publisher excludes that directory from `dist`. This shrinks publication, but does not remove the current source-clone download. Do not move them to Git LFS. Only the selected scene is loaded when Examples enters view.
 - The viewer (`assets/js/viewer.js`) is ported from the original page's `script.js`. It loads three.js r128 and OrbitControls from cdnjs and jsdelivr on demand. Each scene's initial view (camera, rotation, point size, brightness, background) lives in `DEMO_CONFIGS` at the top of that file, baked from the original page's live config; edit it there to change what visitors see first. The settings button opens view settings whose changes last only for the visit. Measure draws its dots, line and distance as a screen-space overlay projected from the cloud each frame, so they keep one size at any zoom; Esc leaves measuring. The point-size slider shows on-screen pixels (1–10 px); the stored `pointSize` stays in world units. On phones and other light devices (coarse pointer, or `navigator.deviceMemory` ≤ 4), the 2 M point budget rounds up to complete chunks (31 chunks / 2,031,616 points for large scenes); a "Load all" button then loads the rest on request.
 - The scene thumbnails reuse the example clips in `assets/media/examples/`.
 - Method figure (`assets/js/method.js`): the global-attention mask for N = 4 frames with a group-size switch (G = 1, 2, 3, N; the G = 3 case leaves a one-frame last group, since the paper only defines G dividing N). Picking a group size plays the autoregressive steps once: rows of the mask fill per step, earlier frames pass through a KV-cache queue of Q = 2, and point maps appear as each group is decoded. Frames and point maps are 7-Scenes examples from the paper's Fig. 3 (`assets/media/method/`).
