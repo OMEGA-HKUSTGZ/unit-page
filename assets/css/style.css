@@ -1149,6 +1149,20 @@ body.lightbox-open {
   }
 }
 
+/* The lab site's six links beside the wordmark: tighter below 1000px, and below 760px they no
+   longer fit, so the wordmark and the breadcrumb lead back to the lab site. */
+@media (max-width: 1000px) {
+  .main-nav {
+    gap: 18px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 760px) {
+  .main-nav {
+    display: none;
+  }
+}
+
 @media (max-width: 680px) {
   body {
     font-size: 17px;
