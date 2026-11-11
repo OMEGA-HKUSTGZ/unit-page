@@ -1,1 +1,3 @@
 .DS_Store
+# Local copies for offline preview only; the published files live in unit-media.
+assets/media/point-clouds/

@@ -18,8 +18,8 @@ node tools/check.mjs
 ```
 
 It parses the scripts, runs the loader tests and compares small head/middle/tail Range
-responses from the published media with the retained originals (`--offline` skips that last
-step). The publish workflow runs it before notifying the lab site, so a missing or
+responses from the published media with the bytes recorded in `tools/point-cloud-release.json`
+(`--offline` skips that last step). The publish workflow runs it before notifying the lab site, so a missing or
 incompatible media source cannot silently become a new page dependency.
 
 Preview locally:
@@ -29,8 +29,9 @@ node tools/serve.mjs            # http://127.0.0.1:4390/projects/unit/
 node tools/serve.mjs 4390 /preview/site-pr-1/projects/unit/   # the depth of a lab-site preview
 ```
 
-The server answers HTTP Range, which the viewer requires, and serves the point clouds at
-`/unit-media/point-clouds/` the way the media site does. A server that ignores Range (such as
+The server answers HTTP Range, which the viewer requires, and passes `/unit-media/point-clouds/`
+through from the published media site (or serves local copies, if you put any under
+`assets/media/point-clouds/`, which Git ignores). A server that ignores Range (such as
 `python3 -m http.server`) needs `?full-file-preview=1`, which is permitted only on loopback and
 is a visual preview, not a Range acceptance test.
 
@@ -45,7 +46,7 @@ The published page is indexable and uses the lab's official project URL as its c
 - Video, figures and example clips come from the original UniT project page. The intro video is re-encoded to 720p H.264 for faster loading.
 - Colors, typography and the Ω mark mirror `omega-lab-site` (`src/styles/global.css`, `public/images/brand/omega-mark.svg`). Update both together.
 - Fonts: Inter, Space Grotesk and Source Serif 4 (SIL Open Font License; see `assets/fonts/`). They are self-hosted so the page does not depend on Google Fonts.
-- Interactive point clouds: six scenes, 180,977,460 bytes (172.59 MiB), served by the existing [unit-media Pages](https://omega-hkustgz.github.io/unit-media/) at `/unit-media/point-clouds/<scene>.pnts?v=0e1438880f2957264dab2b617f9d36d15db4d9ec`. The address is root-relative because the page is published at several depths (the lab site, its pull-request previews, this page's own previews); a path relative to the page reaches the media site from one depth only. These v1 paths are frozen; the query isolates caches but is not a substitute for immutability. Future data must use a new versioned path. Their source copies stay in `assets/media/point-clouds/` for verification and rollback; the lab publisher excludes that directory from `dist`. This shrinks publication, but does not remove the current source-clone download. Do not move them to Git LFS. Only the selected scene is loaded when Examples enters view.
+- Interactive point clouds: six scenes, 180,977,460 bytes (172.59 MiB), served by the existing [unit-media Pages](https://omega-hkustgz.github.io/unit-media/) at `/unit-media/point-clouds/<scene>.pnts?v=0e1438880f2957264dab2b617f9d36d15db4d9ec`. The address is root-relative because the page is published at several depths (the lab site, its pull-request previews, this page's own previews); a path relative to the page reaches the media site from one depth only. These v1 paths are frozen; the query isolates caches but is not a substitute for immutability. Future data must use a new versioned path. They are no longer in this repository's tree: unit-media is the one place that holds them, and `tools/point-cloud-release.json` records the sizes and checksums the check expects. Earlier commits of this repository still contain the files, so a full clone still downloads them (`git clone --filter=blob:none` or `--depth 1` does not); the history is deliberately not rewritten. Do not move them to Git LFS: GitHub Pages serves LFS pointer files, not the data. Only the selected scene is loaded when Examples enters view.
 - The viewer (`assets/js/viewer.js`) is ported from the original page's `script.js`. It loads three.js r128 and OrbitControls from cdnjs and jsdelivr on demand. Each scene's initial view (camera, rotation, point size, brightness, background) lives in `DEMO_CONFIGS` at the top of that file, baked from the original page's live config; edit it there to change what visitors see first. The settings button opens view settings whose changes last only for the visit. Measure draws its dots, line and distance as a screen-space overlay projected from the cloud each frame, so they keep one size at any zoom; Esc leaves measuring. The point-size slider shows on-screen pixels (1–10 px); the stored `pointSize` stays in world units. On phones and other light devices (coarse pointer, or `navigator.deviceMemory` ≤ 4), the 2 M point budget rounds up to complete chunks (31 chunks / 2,031,616 points for large scenes); a "Load all" button then loads the rest on request.
 - The scene thumbnails reuse the example clips in `assets/media/examples/`.
 - Method figure (`assets/js/method.js`): the global-attention mask for N = 4 frames with a group-size switch (G = 1, 2, 3, N; the G = 3 case leaves a one-frame last group, since the paper only defines G dividing N). Picking a group size plays the autoregressive steps once: rows of the mask fill per step, earlier frames pass through a KV-cache queue of Q = 2, and point maps appear as each group is decoded. Frames and point maps are 7-Scenes examples from the paper's Fig. 3 (`assets/media/method/`).
@@ -68,22 +69,22 @@ successful media deployment, and verify the actual 206 responses. Then change
 the viewer script query in `index.html`, and run the checks above. Never remove
 media still referenced by a published or cached viewer.
 
-The initial rollout keeps the original files in the lab publication while the
-new viewer is validated. Only after that deployment and a cache compatibility
-window does the lab site exclude them. Page links, canonical and `#examples`
-remain unchanged. Old binary URLs under `/projects/unit/assets/media/point-clouds/`
-stop working once exclusion is enabled; an HTML redirect cannot preserve Range.
+The page has loaded the point clouds from unit-media since 2026-11-07, and the lab site has
+left this repository's copies out of its publication since 2026-11-09. The copies were removed
+from the tree after that; old binary URLs under `/projects/unit/assets/media/point-clouds/` no
+longer exist.
 
-To roll back without breaking the viewer:
+Rollback, should the media site ever have to be abandoned:
 
-1. In omega-lab-site, remove only the point-cloud exclusion in `project-pages.json`
-   and temporarily restore the publication budget to 260,000,000 bytes. Publish
-   and verify the original six paths first. Keep the other housekeeping exclusions.
-2. Set `POINT_CLOUD_BASE` back to `assets/media/point-clouds/`, bump both cache names
-   and the script query, and republish through the usual lab workflow. Keep the
-   Range validation and existing interactions.
-3. Verify all scenes and phone controls. Retain unit-media for cached viewers;
-   do not delete it or rewrite repository history.
+1. Bring the six files back with an ordinary commit: `git revert` the commit that removed them
+   (they are still in history), or copy them from unit-media and check them against its
+   manifest.
+2. In omega-lab-site, remove only the point-cloud exclusion in `project-pages.json` and restore
+   the publication budget to 260,000,000 bytes. Publish and verify the six paths first.
+3. Set `POINT_CLOUD_BASE` to `assets/media/point-clouds/`, bump both cache names and the script
+   query, and republish through the usual lab workflow. Keep the Range validation.
+4. Verify all scenes and phone controls. Retain unit-media for cached viewers; do not delete it
+   or rewrite repository history.
 
 Record both source revisions when releasing: rerunning an old lab-site workflow
 alone is insufficient because it fetches the project page's current default branch.
