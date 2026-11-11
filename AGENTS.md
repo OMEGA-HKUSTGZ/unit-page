@@ -20,15 +20,18 @@ Point clouds are served separately by the existing same-origin unit-media Pages.
 
 ```sh
 node tools/check.mjs
-node tools/verify-point-cloud-host.mjs
 ```
 
-CI runs the same checks before notifying the lab site. Preview desktop and phone
-interactions with a Range-capable server; see README for the local path layout.
+CI runs the same command (`--offline` skips the real Range requests to the media site).
+Look at the page with `node tools/serve.mjs`: it serves the page at `/projects/unit/` and the
+point clouds at `/unit-media/point-clouds/` with HTTP Range. A pull request gets a preview at
+`https://omega-hkustgz.github.io/preview/unit-pr-<number>/`.
 
 ## 坑
 
 - Keep `/projects/unit/`, canonical and the `../../` lab navigation unchanged.
+- Point clouds load from the root-relative `/unit-media/point-clouds/`: the page is also served
+  at preview depths, where a page-relative path misses the media site.
 - Do not overwrite frozen point-cloud URLs or move them to Git LFS.
 - A 200 whole-file response is a production failure, even if it can render.
 - Bump the viewer script URL and cache names when changing resource identity.
