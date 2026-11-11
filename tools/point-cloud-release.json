@@ -1,0 +1,116 @@
+{
+  "note": "Expected bytes of the six frozen v1 point clouds on the media site. Sizes and whole-file SHA-256 are those of unit-media's point-clouds-manifest.json; the windows are the SHA-256 of 64 bytes at the head, middle and tail, which tools/verify-point-cloud-host.mjs requests with HTTP Range.",
+  "manifest": "https://github.com/OMEGA-HKUSTGZ/unit-media/blob/main/point-clouds-manifest.json",
+  "release": "v1",
+  "dataVersion": "0e1438880f2957264dab2b617f9d36d15db4d9ec",
+  "files": {
+    "drift": {
+      "bytes": 7523861,
+      "sha256": "aa708e7013fc7d1b11c731cebd2157dd78390a9eb4e368273b829d8150072aa9",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "68158012315de56eaa4582641c3772daf805b96f69d0b4212958c18878f55ae8"
+        },
+        {
+          "start": 3761930,
+          "sha256": "7e7d8d744c59cef28d22c16c937b9610300e591758753ea656573aa26e240df1"
+        },
+        {
+          "start": 7523797,
+          "sha256": "f27aa3a9e42a7101690d7c95417e98bd53b30cf5701bb2e160d11fd828506caf"
+        }
+      ]
+    },
+    "gta_sfm": {
+      "bytes": 52650286,
+      "sha256": "20a514c5f4e105ba54db88d37b3b5e64eeab45ca6eef3c69d2d6dfbdbd8cbf7a",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "e618513b12292737d8057a2ce68971b23cecea028dfb5edc24e67f8bba64fa5e"
+        },
+        {
+          "start": 26325143,
+          "sha256": "b181656b22f6cddbdc49eb24e850bab9c63bd964425349d52853da6883d3d1d4"
+        },
+        {
+          "start": 52650222,
+          "sha256": "8797de01eecabccbc6c412f930fd2104687b98837eaffd637b9c9882cbcab31e"
+        }
+      ]
+    },
+    "hkust_intr": {
+      "bytes": 57847839,
+      "sha256": "c6e03fa4114308a0ecf35c713e6bfc814f421aac6063158858214b82b6775875",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "db99ac6369bfb966a27e514699c6170ddd3a307bbad497476d56dbcb7d18eb08"
+        },
+        {
+          "start": 28923919,
+          "sha256": "a75c63c9c389a0db43a5f1f0f483a0f1487e2b1a6b6004be1d864f28d17b34b0"
+        },
+        {
+          "start": 57847775,
+          "sha256": "0f63044e3b7a94f55ff39af9a46978ce799f9a08e91c179c4bf860d8f9dd52a6"
+        }
+      ]
+    },
+    "hkust_redbird": {
+      "bytes": 16406446,
+      "sha256": "8f8854fa81995fb4e0ef91270a01366db29d154184682498010afe3f0b97d4ae",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "27a4dd6ead6e60a7e4131c7e5debfeead62ac71b1a178626d7e46c1ee84ef9f0"
+        },
+        {
+          "start": 8203223,
+          "sha256": "1b1c6c2d3ca0ee3d02fd861c5187db52599cdfe8ee2ac3e467501da54e932ef5"
+        },
+        {
+          "start": 16406382,
+          "sha256": "846377165042bfd7c834bbd05ee8ff68a9abdefe65cc44480c8a897207080eb2"
+        }
+      ]
+    },
+    "hkust_toy": {
+      "bytes": 18088488,
+      "sha256": "d26f91e8247e5635996b9193f81071754be8f4a4ae1ef2fa103ec1722fdb9a74",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "a58eeac30008c1c58e84ec9f1df91cd192a69d1a681512a5aa55f3cf6caf4601"
+        },
+        {
+          "start": 9044244,
+          "sha256": "d938b390fdfc226a5ae4f433ab5741115ef2f9d4f6583f936046d3b15ca4d139"
+        },
+        {
+          "start": 18088424,
+          "sha256": "c365dbeac4204fa9333c67471d75e359cc99d76aff82532bb9c5cc30783b23e1"
+        }
+      ]
+    },
+    "kitti": {
+      "bytes": 28460540,
+      "sha256": "b794b90d95757b450be5d4e54669d6bc8d184e0bd213285e020bbacd6ecfc74a",
+      "windows": [
+        {
+          "start": 0,
+          "sha256": "b1dcbee8f0959dd20b49c058b51089842f9873b37c85a4b268c947a6063cecbb"
+        },
+        {
+          "start": 14230270,
+          "sha256": "87c86be7b5f2aa86b73b89921658af082c9a8a8561df26d2a2e751f060370e11"
+        },
+        {
+          "start": 28460476,
+          "sha256": "0133aa358b01a8f34f9ea9765c2bcfd72a9f4f2d0ded47a6c3ffb6702e147b45"
+        }
+      ]
+    }
+  }
+}

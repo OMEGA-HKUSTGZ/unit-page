@@ -20,6 +20,4 @@ jobs:
     uses: OMEGA-HKUSTGZ/.github/.github/workflows/project-page.yml@main
     with:
       slug: unit
-      # Served by unit-media; the lab site leaves the same folder out.
-      preview-exclude: assets/media/point-clouds
     secrets: inherit
