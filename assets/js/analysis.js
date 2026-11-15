@@ -1,6 +1,6 @@
 // Analysis: the four capabilities, each with the evidence for it, plus the
 // training-data strip in the Method section. Reads assets/js/analysis-data.js
-// (Tables 1, 9-11 and Fig. 10) and assets/js/results-data.js (Tables 3-7).
+// (Tables 1, 10-14 and Fig. 12) and assets/js/results-data.js (Tables 3-8).
 // Every block has a fixed size; values enter once, when a chapter first
 // scrolls into view, and only transforms and opacity animate.
 (() => {
@@ -256,7 +256,8 @@
     return panel;
   };
 
-  // 01 Any view: group size (Fig. 10, bottom).
+  // 01 Any view: group size (Fig. 12, bottom), binocular streaming (Table 14)
+  // and unified against specialized models (Table 13).
   {
     const P = ev('views');
     const G = A.group;
@@ -279,10 +280,49 @@
         yLo: 0.028, yHi: 0.048, yTicks: [0.03, 0.035, 0.04, 0.045], xLabel: G.xLabel, H: 230,
         ends: [{ index: 0, label: 'online' }, { index: G.x.length - 1, label: 'offline' }],
       }));
+
+      const B = A.binocular;
+      const bt = B.rows.find((r) => r.label === 'TTT3R');
+      const b2 = B.rows.find((r) => r.ours);
+      const bb = block(P, {
+        title: 'Two cameras per step',
+        src: B.table,
+        note: `${B.table}. ${B.note} Bars show ATE (m). Translation RPE falls the same way; rotation RPE is lower for TTT3R (${bt.values[0][2].toFixed(2)} against ${b2.values[0][2].toFixed(2)} for G = 2).`,
+      });
+      barRows(bb, {
+        max: 0.7,
+        ticks: [0, 0.2, 0.4, 0.6],
+        keys: [{ label: 'Scale-invariant', color: C.si }, { label: 'Metric scale', color: C.ms }],
+        unit: (v) => f3(v),
+        rows: B.rows.map((r) => ({ label: r.label, bars: [r.values[0][0], r.values[1][0]], ours: r.ours })),
+      });
+
+      const U = A.unified;
+      const [sp, un] = U.rows;
+      const trails = U.columns.filter((_, j) => un.values[j] > sp.values[j]).length;
+      const ub = block(P, {
+        title: 'What one model costs',
+        src: U.table,
+        note: `${U.table}. ${U.note} Averaged over the six columns the unified model is lower (${f3(un.avg)} against ${f3(sp.avg)}); it trails the specialist in ${trails} of them.`,
+      });
+      barRows(ub, {
+        max: 0.2,
+        ticks: [0, 0.05, 0.1, 0.15, 0.2],
+        keys: [{ label: 'Specialized model', color: C.base }, { label: 'Unified UniT', color: C.ms }],
+        unit: (v) => f3(v),
+        rows: U.columns.map((c, j) => {
+          const d = pct(sp.values[j], un.values[j]);
+          return {
+            label: `${c[0]} · ${c[1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
+            bars: [sp.values[j], un.values[j]],
+            tag: d === 0 ? '±0%' : `${d > 0 ? '+' : '−'}${Math.abs(d)}%`,
+          };
+        }),
+      });
     }
   }
 
-  // 02 Any modality: Table 7 as an UpSet-style matrix, then Table 9.
+  // 02 Any modality: Table 8 as an UpSet-style matrix, then Table 10.
   {
     const P = ev('modality');
     if (P && R) {
@@ -395,7 +435,7 @@
       up.appendChild(tip);
       body.appendChild(up);
 
-      // Table 9: which fusion design.
+      // Table 10: which fusion design.
       const Md = A.modal;
       const first = Md.rows[0].avg;
       const last = Md.rows[Md.rows.length - 1].avg;
@@ -465,7 +505,7 @@
       const body = block(P, {
         title: 'UniT’s place among all methods',
         src: 'Tables 3–6',
-        note: 'Place by the paper’s average rank over each table’s nine metrics, among the methods evaluated in that setting (fewer methods predict metric scale, so those columns have two to four). Monocular depth has a single setting.',
+        note: 'Place by the paper’s average rank over each table’s nine metrics, among the methods evaluated in that setting (fewer methods predict metric scale, so those columns have three to six). Monocular depth has a single setting.',
       });
       const rm = h('div', 'an-rm');
       const hd1 = h('div', 'an-rm-row an-rm-h1');
@@ -500,7 +540,7 @@
       rm.appendChild(foot);
       body.appendChild(rm);
 
-      // Table 10: loss.
+      // Table 11: loss.
       const L = A.loss;
       const a = L.rows[0].values;
       const c = L.rows[2].values;
@@ -526,7 +566,7 @@
     }
   }
 
-  // 04 Long horizon: queue capacity (Fig. 10, top) and drop strategy (Table 11).
+  // 04 Long horizon: queue capacity (Fig. 12, top) and drop strategy (Table 12).
   {
     const P = ev('horizon');
     if (P) {
@@ -556,7 +596,7 @@
         rows: D.rows.map((r) => ({ label: r.label, bars: r.values.map((v, j) => Number((v - D.full[j]).toFixed(3))), ours: r.ours })),
       });
       const more = h('p', 'an-more');
-      const btn = h('a', '', 'Sequences of up to 500 frames: Results, Long horizon');
+      const btn = h('a', '', '500 indoor frames and kilometres of driving: Results, Long horizon');
       btn.href = '#rx-long';
       more.appendChild(btn);
       P.appendChild(more);

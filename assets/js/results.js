@@ -2,9 +2,10 @@
 // (assets/js/results-data.js) and the digitized long-horizon curves
 // (assets/js/longhorizon-data.js).
 //
-// Long horizon gets a small pose-error curve; "See the curves" opens Fig. 9
-// redrawn in full and speed and memory (Table 2) as a ranked board. Multi-modal
-// (Table 7) and depth completion (Table 8) list UniT's placing per setting by
+// Long horizon gets a small pose-error curve; below the cards sit Fig. 11
+// redrawn in full, KITTI-Odometry (Table 7) and speed and memory (Table 2) as
+// ranked boards. Multi-modal (Table 8) and depth completion (Table 9) list
+// UniT's placing per setting by
 // the paper's average rank, and open the paper's table in the lightbox.
 (() => {
   const DATA = window.UNIT_RESULTS;
@@ -20,6 +21,9 @@
     DepthAnything3: '#6f86a6',
     CUT3R: '#8f7fa8',
     StreamVGGT: '#a39684',
+    TTT3R: '#a8749f',
+    Stream3R: '#9b9a45',
+    'VGGT-Long': '#5f7a63',
   };
   window.UNIT_COLORS = COLORS;
   const colorOf = (m) => COLORS[m.startsWith('UniT') ? 'UniT' : m] || '#999';
@@ -247,7 +251,7 @@
     host.append(ul, h('p', 'rx-key', KEYS[task]));
   }
 
-  // Pose error over sequence length (Fig. 9, top), UniT against CUT3R and DA3.
+  // Pose error over sequence length (Fig. 11, top), UniT against CUT3R and DA3.
   function buildSpark(host) {
     const LH = window.UNIT_LONGHORIZON;
     if (!LH) return;
@@ -337,7 +341,54 @@
     charts.complexity = { reveal: board.reveal };
   }
 
-  // ---------- Long horizon (Fig. 9) ----------
+  // ---------- KITTI-Odometry (Table 7) ----------
+  // Whole sequences in one streaming pass, and in chunks inside VGGT-Long.
+  function buildKitti(host) {
+    const spec = DATA.kitti;
+    if (!spec) return;
+    const groups = [
+      { key: 'whole', title: 'Whole sequence', sub: 'one streaming pass', ids: ['StreamVGGT', 'TTT3R', 'UniT'] },
+      { key: 'chunked', title: 'In chunks', sub: 'VGGT-Long framework', ids: ['VGGT-Long', 'UniT-Long'] },
+    ];
+    const byId = Object.fromEntries(spec.rows.map((r) => [r.method, r]));
+    const nameOf = (id) => (id === 'UniT-Long' ? 'UniT in VGGT-Long' : id);
+    const { controls, body, note } = makeCard(host);
+    const board = makeBoard({
+      cls: 'lb-wide-names',
+      groups: groups.map((g) => ({ key: g.key, members: g.ids.map((id) => ({ id, name: nameOf(id) })) })),
+      metrics: [{ name: 'ATE (m)', dir: 'down', digits: 2 }],
+    });
+    body.appendChild(board.root);
+    const seqs = spec.sequences;
+    const frames = seqs.map((q) => q.frames);
+    const ran = byId.StreamVGGT.values.filter((v) => v !== null).length;
+    const show = (pi) => {
+      const seq = pi === 0 ? null : seqs[pi - 1];
+      const state = {};
+      groups.forEach((g) => {
+        const rows = {};
+        g.ids.forEach((id) => {
+          const r = byId[id];
+          const v = seq ? r.values[pi - 1] : r.avg;
+          if (v !== null) rows[id] = { values: [v], best: [seq ? r.best.includes(pi - 1) : r.avgBest] };
+        });
+        const sorted = Object.keys(rows).sort((a, b) => rows[a].values[0] - rows[b].values[0]);
+        const place = 1 + sorted.findIndex((id) => isUniT(id));
+        state[g.key] = { title: g.title, sub: g.sub, note: place ? `UniT ${ordinal(place)}` : '', rows, absent: 'out of memory' };
+      });
+      board.render(state);
+      note.textContent = seq
+        ? `${spec.table} of the paper, sequence ${seq.id}: ${seq.frames.toLocaleString('en-US')} frames, ${seq.km} km. Scale-aligned ATE in metres; bold values are the paper’s best.`
+        : `${spec.table} of the paper: mean over the ${seqs.length} KITTI-Odometry sequences (${Math.min(...frames)} to ${Math.max(...frames).toLocaleString('en-US')} frames, up to ${Math.max(...seqs.map((q) => q.km))} km). ATE is scale-aligned so that scale-invariant methods can be compared. StreamVGGT runs out of memory on all but ${ran} sequences.`;
+    };
+    const seg = makeSeg('Sequence', ['Mean', ...seqs.map((q) => q.id)], 0, show);
+    controls.appendChild(seg.wrap);
+    show(0);
+    onFirstView(board.root, board.reveal);
+    charts.kitti = { reveal: board.reveal };
+  }
+
+  // ---------- Long horizon (Fig. 11) ----------
   function buildLongHorizon(host) {
     const LH = window.UNIT_LONGHORIZON;
     if (!LH) return;
@@ -359,7 +410,7 @@
 
     const panels = h('div', 'lh-panels');
     const foot = h('div', 'lb-foot');
-    foot.appendChild(h('p', 'lb-note', 'Values read from the markers of Fig. 9 in the paper (NRGBD, metric scale), accurate to about ±0.005.'));
+    foot.appendChild(h('p', 'lb-note', 'Values read from the markers of Fig. 11 in the paper (NRGBD, metric scale), accurate to about ±0.005.'));
     const pair = host.querySelector('.pair');
     if (pair) {
       const det = h('details', 'paper-table');
@@ -556,6 +607,7 @@
   document.querySelectorAll('[data-pills]').forEach(buildPills);
   document.querySelectorAll('[data-spark]').forEach(buildSpark);
   document.querySelectorAll('[data-complexity]').forEach(buildComplexity);
+  document.querySelectorAll('[data-kitti]').forEach(buildKitti);
   document.querySelectorAll('[data-longhorizon]').forEach(buildLongHorizon);
   window.UNIT_CHARTS = charts;
 
@@ -575,7 +627,7 @@
       const open = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', String(open));
       const label = btn.querySelector('.rx-more-label');
-      if (label) label.textContent = open ? 'Hide the curves' : 'Show the curves, speed and memory';
+      if (label) label.textContent = open ? 'Hide the curves' : 'Show the curves, KITTI, speed and memory';
       panel.hidden = !open;
       if (!open) return;
       charts.longHorizon?.measure();

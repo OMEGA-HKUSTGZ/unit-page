@@ -8,12 +8,12 @@
     <title>UniT — OMEGA Lab</title>
     <meta
       name="description"
-      content="UniT: Unified Geometry Learning with Group Autoregressive Transformer. A project of OMEGA Lab, HKUST(GZ)."
+      content="UniT: Unified Geometry Learning with Group Causal Transformer. A project of OMEGA Lab, HKUST(GZ)."
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="OMEGA Lab" />
     <meta property="og:title" content="UniT — OMEGA Lab" />
-    <meta property="og:description" content="UniT: Unified Geometry Learning with Group Autoregressive Transformer. A project of OMEGA Lab, HKUST(GZ)." />
+    <meta property="og:description" content="UniT: Unified Geometry Learning with Group Causal Transformer. A project of OMEGA Lab, HKUST(GZ)." />
     <meta property="og:url" content="https://omega-hkustgz.github.io/projects/unit/" />
     <meta property="og:image" content="https://omega-hkustgz.github.io/projects/unit/assets/media/intro-poster.jpg" />
     <meta property="og:image:alt" content="UniT geometry learning overview" />
@@ -73,7 +73,7 @@
       <section class="hero container">
         <p class="eyebrow"><span class="eyebrow-rule"></span>MULTIMODAL PERCEPTION · 2026</p>
         <h1>UniT</h1>
-        <p class="subtitle">Unified Geometry Learning with Group Autoregressive Transformer</p>
+        <p class="subtitle">Unified Geometry Learning with Group Causal Transformer</p>
 
         <ul class="authors">
           <li>Haotian Wang<sup>1</sup></li>
@@ -105,8 +105,8 @@
         <figure class="media-frame video-frame">
           <video
             class="intro-video"
-            src="assets/media/intro.mp4"
-            poster="assets/media/intro-poster.jpg"
+            src="assets/media/intro.mp4?v=20261115"
+            poster="assets/media/intro-poster.jpg?v=20261115"
             autoplay
             muted
             loop
@@ -177,16 +177,17 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow"><span class="eyebrow-rule"></span>METHOD</p>
-              <h2>Group autoregressive transformer</h2>
+              <h2>Group causal transformer</h2>
             </div>
             <p>
-              UniT treats a group of G synchronized views as one autoregressive step. Attention is
-              bidirectional inside a group and causal across groups, so one model runs online
+              UniT learns geometry as next-group prediction: each step takes a group of G
+              synchronized views. Attention is bidirectional inside a group and causal across
+              groups, so one model runs online
               (G&nbsp;=&nbsp;1), on stereo or multi-camera streams, or offline (G&nbsp;=&nbsp;N).
             </p>
           </div>
 
-          <figure class="gx" data-method aria-label="Group autoregression explained through the attention mask">
+          <figure class="gx" data-method aria-label="Group causal attention explained through the attention mask">
             <figcaption>
               A toy example with N&nbsp;=&nbsp;4 frames from 7-Scenes and a KV-cache queue of
               Q&nbsp;=&nbsp;2 frames. Rows are query frames and columns key frames, as in the paper's
@@ -197,7 +198,7 @@
 
           <ul class="method-parts">
             <li>
-              <h3>Group autoregression</h3>
+              <h3>Group causal modeling</h3>
               <p>Bidirectional attention within a group, causal attention across groups. One formulation covers monocular video, multi-camera streams and multi-view sets.</p>
               <a class="mp-link" href="#cap-views"><span>01</span> Any view configuration</a>
             </li>
@@ -384,14 +385,15 @@
             <h2>Evaluated across tasks and settings</h2>
           </div>
           <p>
-            Compared with VGGT, π³, MapAnything, DepthAnything3, CUT3R and StreamVGGT under
-            both scale-invariant and metric-scale settings.
+            Compared with nine baselines, offline (VGGT, π³, MapAnything, DepthAnything3),
+            streaming (CUT3R, StreamVGGT, TTT3R, Stream3R) and chunked (VGGT-Long), under both
+            scale-invariant and metric-scale settings.
           </p>
         </div>
 
         <dl class="stats">
           <div>
-            <dt>Benchmarks</dt><dd>10</dd>
+            <dt>Benchmarks</dt><dd>11</dd>
             <dd class="stat-items">
               <ul>
                 <li>7-Scenes</li>
@@ -404,6 +406,7 @@
                 <li>NYUv2</li>
                 <li>ETH3D</li>
                 <li>Bonn</li>
+                <li>KITTI-Odometry</li>
               </ul>
             </dd>
           </div>
@@ -422,7 +425,7 @@
             </dd>
           </div>
           <div>
-            <dt>Baselines</dt><dd>6</dd>
+            <dt>Baselines</dt><dd>9</dd>
             <dd class="stat-items">
               <ul>
                 <li><span class="stat-sw" style="--c:#7f9a83"></span>VGGT<span class="stat-venue">CVPR 2025</span></li>
@@ -431,6 +434,9 @@
                 <li><span class="stat-sw" style="--c:#6f86a6"></span>DepthAnything3<span class="stat-venue">ICLR 2026</span></li>
                 <li><span class="stat-sw" style="--c:#8f7fa8"></span>CUT3R<span class="stat-venue">CVPR 2025</span></li>
                 <li><span class="stat-sw" style="--c:#a39684"></span>StreamVGGT<span class="stat-venue">ICLR 2026</span></li>
+                <li><span class="stat-sw" style="--c:#a8749f"></span>TTT3R<span class="stat-venue">ICLR 2026</span></li>
+                <li><span class="stat-sw" style="--c:#9b9a45"></span>Stream3R<span class="stat-venue">ICLR 2026</span></li>
+                <li><span class="stat-sw" style="--c:#5f7a63"></span>VGGT-Long<span class="stat-venue">ICRA 2026</span></li>
               </ul>
             </dd>
           </div>
@@ -438,12 +444,12 @@
 
         <figure class="radar" id="radar" data-radar aria-label="Benchmark radar"></figure>
         <div class="media-frame" hidden>
-          <img data-table-img="reconstruction" src="assets/media/results/table3_reconstruction.png" width="1585" height="640" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." />
-          <img data-table-img="pose" src="assets/media/results/table4_pose.png" width="1585" height="645" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." />
-          <img data-table-img="videoDepth" src="assets/media/results/table5_video_depth.png" width="1585" height="585" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." />
-          <img data-table-img="monoDepth" src="assets/media/results/table6_mono_depth.png" width="1585" height="535" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." />
-          <img data-table-img="multiModal" src="assets/media/results/table7_multimodal.png" width="1585" height="925" loading="lazy" alt="Table 7: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." />
-          <img data-table-img="depthCompletion" src="assets/media/results/table8_depth_completion.png" width="1585" height="560" loading="lazy" alt="Table 8: depth completion results on Sintel, KITTI and NYUv2." />
+          <img data-table-img="reconstruction" src="assets/media/results/table3_reconstruction.png?v=20261115" width="1502" height="814" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." />
+          <img data-table-img="pose" src="assets/media/results/table4_pose.png?v=20261115" width="1504" height="814" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." />
+          <img data-table-img="videoDepth" src="assets/media/results/table5_video_depth.png?v=20261115" width="1510" height="814" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." />
+          <img data-table-img="monoDepth" src="assets/media/results/table6_mono_depth.png?v=20261115" width="1506" height="714" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." />
+          <img data-table-img="multiModal" src="assets/media/results/table8_multimodal.png" width="1500" height="994" loading="lazy" alt="Table 8: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." />
+          <img data-table-img="depthCompletion" src="assets/media/results/table9_depth_completion.png" width="1506" height="642" loading="lazy" alt="Table 9: depth completion results on Sintel, KITTI and NYUv2." />
         </div>
 
         <div class="rx-intro">
@@ -464,14 +470,14 @@
             <h4 class="rx-claim"><b>#1</b> in 5 of 7 input combinations</h4>
             <p class="rx-body">Give it intrinsics, camera poses or depth, alone or combined. UniT uses whatever is available and never places below 2nd.</p>
             <div class="rx-vis" data-pills="multiModal"></div>
-            <button type="button" class="rx-more" data-open-table="multiModal">Table 7 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
+            <button type="button" class="rx-more" data-open-table="multiModal">Table 8 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
           </article>
           <article class="rx-card" id="rx-sparse">
             <p class="rx-eyebrow">Depth completion</p>
             <h4 class="rx-claim"><b>#1</b> on all 4 sparse patterns</h4>
             <p class="rx-body">Random points, LiDAR beams, SfM points or a coarse grid: UniT fills in dense depth best in every case.</p>
             <div class="rx-vis" data-pills="depthCompletion"></div>
-            <button type="button" class="rx-more" data-open-table="depthCompletion">Table 8 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
+            <button type="button" class="rx-more" data-open-table="depthCompletion">Table 9 from the paper<span class="rx-arrow" aria-hidden="true">↗</span></button>
           </article>
         </div>
 
@@ -479,10 +485,16 @@
           <p><strong>Long horizon</strong> on NRGBD, from 50 to 500 frames in steps of 50. Point at a chart to read the values.</p>
           <div class="lh" data-longhorizon>
             <div class="pair">
-              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 9, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
-              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 9, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_ate.png" width="800" height="345" loading="lazy" alt="Figure 11, top: pose accuracy (ATE) on NRGBD as sequence length grows." /><figcaption>Pose accuracy (ATE)</figcaption></figure>
+              <figure class="media-frame"><img src="assets/media/results/fig9_long_horizon_rmse.png" width="800" height="345" loading="lazy" alt="Figure 11, bottom: depth accuracy (RMSE) on NRGBD as sequence length grows." /><figcaption>Depth accuracy (RMSE)</figcaption></figure>
             </div>
           </div>
+          <h3 class="rc-subhead">Kilometre-scale driving</h3>
+          <div data-kitti></div>
+          <details class="paper-table">
+            <summary>Show the table from the paper</summary>
+            <figure class="media-frame"><img src="assets/media/results/table7_kitti_odometry.png" width="1500" height="456" loading="lazy" alt="Table 7: long-horizon perception on the KITTI-Odometry dataset." /></figure>
+          </details>
           <h3 class="rc-subhead">Speed and memory</h3>
           <div data-complexity></div>
         </div>
@@ -496,8 +508,8 @@
           </div>
           <p>
             The four capabilities from the overview, each traced to the design behind it and
-            checked against the paper's own numbers: the benchmark tables (Tables&nbsp;3–7) and
-            the ablations (Tables&nbsp;9–11 and Fig.&nbsp;10).
+            checked against the paper's own numbers: the benchmark tables (Tables&nbsp;3–8) and
+            the ablations (Tables&nbsp;10–14 and Fig.&nbsp;12).
           </p>
         </div>
 
@@ -508,11 +520,11 @@
               <h3>One model, from streaming video to offline sets</h3>
               <p class="an-stat"><strong>−16%</strong><span>camera-pose error going from G&nbsp;=&nbsp;1 (online) to G&nbsp;=&nbsp;90 (offline) with the same model</span></p>
               <p class="an-why">
-                Group autoregression makes the group size a choice at inference time. Larger
+                Group causal modeling makes the group size a choice at inference time. Larger
                 groups let more frames attend to each other in both directions, and the error falls
                 steadily across the whole range, with no cliff in between.
               </p>
-              <a class="an-from" href="#method">Design <span>Group autoregression</span></a>
+              <a class="an-from" href="#method">Design <span>Group causal modeling</span></a>
             </div>
             <div class="an-ev" data-an="views"></div>
           </article>
@@ -569,7 +581,7 @@
           <div class="bibtex">
             <button class="copy" type="button" data-copy="#bibtex">Copy</button>
             <pre id="bibtex"><code>@misc{wang2026unit,
-  title={UniT: Unified Geometry Learning with Group Autoregressive Transformer},
+  title={UniT: Unified Geometry Learning with Group Causal Transformer},
   author={Haotian Wang and Yusong Huang and Zhaonian Kuang and Hongliang Lu and Xinhu Zheng and Meng Yang and Gang Hua},
   year={2026},
   eprint={2605.21131},
@@ -594,13 +606,13 @@
     </footer>
 
     <script src="assets/js/main.js?v=20261107s" defer></script>
-    <script src="assets/js/method.js?v=20261109a" defer></script>
-    <script src="assets/js/results-data.js?v=20261107s" defer></script>
-    <script src="assets/js/longhorizon-data.js?v=20261107s" defer></script>
-    <script src="assets/js/results.js?v=20261107s" defer></script>
-    <script src="assets/js/radar.js?v=20261107s" defer></script>
-    <script src="assets/js/analysis-data.js?v=20261107s" defer></script>
-    <script src="assets/js/analysis.js?v=20261107s" defer></script>
+    <script src="assets/js/method.js?v=20261115" defer></script>
+    <script src="assets/js/results-data.js?v=20261115" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261115" defer></script>
+    <script src="assets/js/results.js?v=20261115" defer></script>
+    <script src="assets/js/radar.js?v=20261115" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261115" defer></script>
+    <script src="assets/js/analysis.js?v=20261115" defer></script>
     <script src="assets/js/viewer.js?v=20261110-rootpath1" defer></script>
   </body>
 </html>

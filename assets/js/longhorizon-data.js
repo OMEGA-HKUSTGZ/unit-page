@@ -1,4 +1,4 @@
-// Long-horizon perception on NRGBD (the paper's Fig. 9), metric scale.
+// Long-horizon perception on NRGBD (the paper's Fig. 11; Fig. 9 in the arXiv version), metric scale.
 // The paper gives these curves only as a plot, so the values below were read
 // from the marker centres of the full-resolution figure (img/longhorizonpose.png
 // and img/longhorizondepth.png in the arXiv source), calibrated on the plot's

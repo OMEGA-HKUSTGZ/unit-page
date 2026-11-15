@@ -1,6 +1,6 @@
 // Benchmark radar: one spoke per benchmark of Tables 3–6, the same twelve
 // spokes as the radar in the paper's Fig. 1. Numbers come from
-// assets/js/results-data.js (generated from the paper's LaTeX tables).
+// assets/js/results-data.js (generated from the paper's tables).
 //
 // Score on a spoke = mean over that table's three metrics of the model's value
 // relative to the best model shown (best ÷ value when lower is better,
@@ -22,7 +22,7 @@
   const SPOKES = [];
   TASKS.forEach(([task], ti) => DATA[task].datasets.forEach((ds, di) => SPOKES.push({ task, ti, di, ds })));
   const N = SPOKES.length;
-  const ONLINE_ONLY = ['CUT3R', 'StreamVGGT'];
+  const ONLINE_ONLY = ['CUT3R', 'StreamVGGT', 'TTT3R', 'Stream3R'];
   // Shared with the per-task boards (assets/js/results.js loads first).
   const COLORS = window.UNIT_COLORS;
   const SCALES = ['Metric-scale', 'Scale-invariant'];

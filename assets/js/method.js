@@ -1,9 +1,9 @@
-// Method figure: group autoregression, read through its attention mask.
+// Method figure: group causal attention, read through its attention mask.
 //
 // Four 7-Scenes frames from the paper's architecture figure label both axes of
 // the global-attention mask (rows are query frames, columns key frames), as in
 // the paper's mask figure. The reader picks the group size G; the figure then
-// steps through the autoregressive steps once: the mask fills one group of rows
+// steps through the prediction steps once: the mask fills one group of rows
 // per step, earlier frames are read through a KV-cache queue of capacity Q, and
 // each step decodes its group's point maps. Nothing loops and nothing resizes.
 (() => {
@@ -144,7 +144,7 @@
   const replay = h('button', 'gx-btn gx-replay', '↻ Replay');
   replay.type = 'button';
   stepRow.append(prev, stepNum, next, dots, replay);
-  stepBox.append(h('span', 'gx-label', 'Autoregressive step'), stepRow);
+  stepBox.append(h('span', 'gx-label', 'Prediction step'), stepRow);
 
   const cacheBox = h('div', 'gx-block');
   const cacheHead = h('div', 'gx-blockhead');
