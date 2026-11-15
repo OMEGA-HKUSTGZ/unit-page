@@ -1,5 +1,5 @@
-// Data for the Analysis section and the training-data strip, from the IJCV 2026
-// version of the paper. Tables 1 and 10-14 are copied from the paper's tables,
+// Data for the Key insights section and the training-data strip, from the IJCV
+// 2026 version of the paper. Tables 1, 11 and 13 are copied from the paper's tables,
 // and the capability matrix from the check marks of Fig. 2.
 // Fig. 12 is only given as a plot, so its curves were read from the marker
 // centres of the full-resolution figure (unchanged from Fig. 10 of the arXiv
@@ -18,30 +18,6 @@ window.UNIT_ANALYSIS = {
       { label: 'Direct regression', values: [0.053, 0.201, 0.067, 0.433], avg: 0.188 },
       { label: 'Scale-adaptive design', values: [0.044, 0.108, 0.069, 0.147], avg: 0.092 },
       { label: '+ Shuffled normal loss', values: [0.046, 0.108, 0.07, 0.141], avg: 0.091, ours: true },
-    ],
-  },
-  modal: {
-    table: 'Table 10',
-    note: 'Average of (Acc. + Comp.) / 2 over image-only and multi-modal inputs, both scale settings, on 7-Scenes, NRGBD and DTU.',
-    rows: [
-      { label: 'Linear projection ×4', parts: [false, false, true], values: [0.05, 0.117, 0.037, 0.092], avg: 0.074 },
-      { label: 'Cross attention ×4', parts: [true, false, true], values: [0.04, 0.109, 0.036, 0.095], avg: 0.07 },
-      { label: 'Cross attn. + concat. ×1', parts: [true, true, false], values: [0.048, 0.107, 0.035, 0.088], avg: 0.069 },
-      { label: 'Modal attention ×4', parts: [true, true, true], values: [0.046, 0.108, 0.033, 0.088], avg: 0.068, ours: true },
-    ],
-    partNames: ['Cross attention', 'Concatenation', 'Four stages'],
-    columns: [['Image only', 'S-Inv.'], ['Image only', 'Metric'], ['Multi-modal', 'S-Inv.'], ['Multi-modal', 'Metric']],
-  },
-  drop: {
-    table: 'Table 12',
-    note: 'Camera pose on ScanNetV2, 90 frames, queue capacity Q = 50.',
-    metrics: ['ATE, scale-invariant', 'ATE, metric scale'],
-    full: [0.037, 0.045],
-    rows: [
-      { label: 'Stride drop', values: [0.038, 0.046], ours: true },
-      { label: 'Random drop', values: [0.041, 0.049] },
-      { label: 'Token merge', values: [0.041, 0.05] },
-      { label: 'First in, first out', values: [0.047, 0.057] },
     ],
   },
   queue: {
@@ -63,17 +39,6 @@ window.UNIT_ANALYSIS = {
       'Scale-invariant': [0.037, 0.034, 0.034, 0.033, 0.032, 0.032, 0.032, 0.031, 0.031, 0.031],
       'Metric scale': [0.045, 0.042, 0.042, 0.041, 0.04, 0.04, 0.039, 0.039, 0.038, 0.038],
     },
-  },
-  binocular: {
-    table: 'Table 14',
-    note: 'Camera pose on laboratory sequences of ETH3D-SLAM. G = 2 takes the two views of each time step as one group.',
-    metrics: ['ATE', 'RPE trans.', 'RPE rot.'],
-    columns: ['Scale-invariant', 'Metric scale'],
-    rows: [
-      { label: 'TTT3R', values: [[0.548, 0.316, 6.059], [0.645, 0.236, 6.059]] },
-      { label: 'UniT, G = 1', values: [[0.374, 0.201, 7.067], [0.395, 0.206, 7.067]] },
-      { label: 'UniT, G = 2', values: [[0.347, 0.197, 6.994], [0.363, 0.193, 6.994]], ours: true },
-    ],
   },
   unified: {
     table: 'Table 13',

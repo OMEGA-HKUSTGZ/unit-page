@@ -103,7 +103,7 @@
   const side = h('div', 'rd-side');
   card.append(head, controls, stage, side);
   const caption = h('figcaption', 'rd-caption',
-    'Spokes are the twelve benchmarks of Tables 3–6, the same spokes as the radar in the paper’s Fig. 1. A model’s score on a spoke is the mean over that table’s three metrics of its value relative to the best model shown (best ÷ value when lower is better), so 1.0 on the outer ring means best on every metric.');
+    'Twelve benchmarks from Tables 3–6. Score = mean of best ÷ value over a table’s three metrics; 1.0 is best on every metric.');
   host.append(card, caption);
 
   // ---------- radar drawing ----------

@@ -17,13 +17,13 @@
 
   const MODES = [
     { G: 1, label: 'G = 1', name: 'Online', title: 'Online streaming', mask: 'standard causal mask',
-      text: 'One frame per step. Each frame attends to itself and to the frames still in the KV cache.' },
+      text: 'One frame per step, attending to itself and the cached frames.' },
     { G: 2, label: 'G = 2', name: 'Stereo', title: 'Synchronized pairs', mask: 'group causal mask',
-      text: 'Two views per step, bidirectional within the pair and causal across pairs, as for a stereo rig.' },
+      text: 'Two views per step: bidirectional within the pair, causal across pairs.' },
     { G: 3, label: 'G = 3', name: 'Triple', title: 'Synchronized triples', mask: 'group causal mask',
-      text: 'Three views per step, bidirectional within the group and causal across groups. With N = 4, the last group here holds the one remaining frame.' },
+      text: 'Three views per step. With N = 4, the last group holds the one remaining frame.' },
     { G: N, label: 'G = N', name: 'Offline', title: 'Offline reconstruction', mask: 'null mask',
-      text: 'All frames in a single step with full attention, like a multi-view model. Nothing needs caching.' },
+      text: 'All frames in one step with full attention. Nothing is cached.' },
   ];
 
   const h = (tag, cls, txt) => {
