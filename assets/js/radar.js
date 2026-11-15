@@ -225,7 +225,7 @@
       w.addEventListener('focus', () => setHover(i));
       w.addEventListener('blur', () => setHover(-1));
       w.addEventListener('click', () => { ui.pinned = i; setHover(-1); paintSpoke(); });
-      w.addEventListener('keydown', (e) => { if (e.key === 'Enter') openTable(i); });
+      w.addEventListener('keydown', (e) => { if (e.key === 'Enter') { ui.pinned = i; setHover(-1); paintSpoke(); } });
     });
     svg.addEventListener('mouseleave', () => setHover(-1));
     paint();
@@ -487,21 +487,12 @@
 
     const foot = h('div', 'rd-dfoot');
     foot.appendChild(h('span', 'rd-hint', touch ? 'Tap a spoke for its numbers.' : 'Point at a spoke for its numbers.'));
-    const open = h('button', 'rd-open', `${spec.table} from the paper ↗`);
-    open.type = 'button';
-    open.addEventListener('click', () => openTable(i));
-    foot.appendChild(open);
     detail.appendChild(foot);
   }
   function setHover(i) {
     if (ui.hover === i) return;
     ui.hover = i;
     paintSpoke();
-  }
-
-  // The per-task boards are gone; open the paper's table in the image viewer.
-  function openTable(i) {
-    document.querySelector(`[data-table-img="${SPOKES[i].task}"]`)?.click();
   }
 
   // Lock the side column to the tallest of the four views, so neither a

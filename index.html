@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261115c" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261115d" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -99,6 +99,11 @@
           <a class="button button-light" href="https://enceladush-unit.hf.space/">Live demo <span aria-hidden="true">↗</span></a>
           <a class="button button-light" href="#citation">BibTeX</a>
         </div>
+        <p class="tldr">
+          <strong>TL;DR</strong> One feed-forward model reconstructs 3D geometry online or offline,
+          from any number of views, with optional camera and depth inputs, at metric scale and
+          over long sequences.
+        </p>
       </section>
 
       <section class="container" aria-label="Introduction video">
@@ -132,10 +137,6 @@
             <p class="eyebrow"><span class="eyebrow-rule"></span>OVERVIEW</p>
             <h2>One model for geometry perception</h2>
           </div>
-          <p>
-            One feed-forward model for online and offline inference, any number of views,
-            optional camera and depth inputs, metric scale, and long sequences.
-          </p>
         </div>
 
         <ul class="capabilities">
@@ -414,10 +415,8 @@
                   <p><strong class="is-base">15.1%</strong><span>StreamVGGT, anchored</span></p>
                   <p><strong>8.0%</strong><span>UniT, anchor-free</span></p>
                 </div>
-                <div class="ins-fig">
-                  <img src="assets/media/insights/fig6_attention.png" width="957" height="713" loading="lazy" alt="Figure 6: global attention between query and key frames while streaming 64 frames, for StreamVGGT and UniT, and the mean attention deviation per query frame." />
-                </div>
-                <p class="ins-cap">Mean attention deviation per query frame, 64 streamed frames.</p>
+                <div class="ins-chart" data-attn></div>
+                <p class="ins-cap">Attention deviation per query frame over 64 streamed frames.</p>
               </figure>
               <div class="an-ev" data-an="horizon"></div>
             </div>
@@ -449,13 +448,27 @@
                   <span class="ins-mt">Relative geometry is learned first; metric scale follows</span>
                   <span class="an-src">Fig. 8</span>
                 </figcaption>
-                <div class="ins-fig">
-                  <img src="assets/media/insights/fig8_loss_curves.png" width="960" height="662" loading="lazy" alt="Figure 8: normalized training loss over 80,000 steps. The scale-invariant point loss falls quickly; the metric-scale point loss converges more gradually." />
-                </div>
-                <p class="ins-cap">Normalized training loss: an easy-to-hard curriculum, with no schedule.</p>
+                <div class="ins-chart" data-losscurve></div>
+                <p class="ins-cap">Normalized point loss: an easy-to-hard curriculum, with no schedule.</p>
               </figure>
               <div class="an-ev" data-an="metric"></div>
             </div>
+            <figure class="ql">
+              <figcaption>
+                <span class="ql-t">Scale you can see</span>
+                <span class="ql-n">Raw point clouds at one scene scale, no alignment</span>
+              </figcaption>
+              <div class="ql-f ins-fig">
+                <ol class="ql-h" aria-hidden="true">
+                  <li style="--x:10.4%">Ground truth</li>
+                  <li style="--x:29.4%" class="is-ours">UniT · offline</li>
+                  <li style="--x:48.5%">DepthAnything3</li>
+                  <li style="--x:65.7%" class="is-ours">UniT · online</li>
+                  <li style="--x:85.7%">CUT3R</li>
+                </ol>
+                <img src="assets/media/insights/qualitative_scale.jpg" width="1964" height="732" loading="lazy" alt="Three scenes reconstructed as point clouds, left to right: ground truth, UniT offline, DepthAnything3, UniT online and CUT3R, all drawn at the same scene scale." />
+              </div>
+            </figure>
           </article>
 
           <article class="an-ch ins" id="cap-modality">
@@ -545,15 +558,6 @@
         </dl>
 
         <figure class="radar" id="radar" data-radar aria-label="Benchmark radar"></figure>
-        <div class="media-frame" hidden>
-          <img data-table-img="reconstruction" src="assets/media/results/table3_reconstruction.png?v=20261115" width="1502" height="814" loading="lazy" alt="Table 3: multi-view reconstruction results on 7-Scenes, NRGBD and DTU." />
-          <img data-table-img="pose" src="assets/media/results/table4_pose.png?v=20261115" width="1504" height="814" loading="lazy" alt="Table 4: camera pose estimation results on Sintel, TUM-Dynamic and ScanNetV2." />
-          <img data-table-img="videoDepth" src="assets/media/results/table5_video_depth.png?v=20261115" width="1510" height="814" loading="lazy" alt="Table 5: video depth estimation results on Sintel, Bonn and ETH3D." />
-          <img data-table-img="monoDepth" src="assets/media/results/table6_mono_depth.png?v=20261115" width="1506" height="714" loading="lazy" alt="Table 6: monocular depth estimation results on Sintel, KITTI and NYUv2." />
-          <img data-table-img="kitti" src="assets/media/results/table7_kitti_odometry.png" width="1500" height="456" loading="lazy" alt="Table 7: long-horizon perception on the KITTI-Odometry dataset." />
-          <img data-table-img="multiModal" src="assets/media/results/table8_multimodal.png" width="1500" height="994" loading="lazy" alt="Table 8: multi-modal reconstruction results on 7-Scenes, ETH3D and ScanNetV2." />
-          <img data-table-img="depthCompletion" src="assets/media/results/table9_depth_completion.png" width="1506" height="642" loading="lazy" alt="Table 9: depth completion results on Sintel, KITTI and NYUv2." />
-        </div>
       </section>
 
       <section class="section section-tint" id="citation">
@@ -586,14 +590,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/method.js?v=20261115c" defer></script>
-    <script src="assets/js/results-data.js?v=20261115c" defer></script>
-    <script src="assets/js/longhorizon-data.js?v=20261115c" defer></script>
-    <script src="assets/js/results.js?v=20261115c" defer></script>
-    <script src="assets/js/radar.js?v=20261115c" defer></script>
-    <script src="assets/js/analysis-data.js?v=20261115c" defer></script>
-    <script src="assets/js/analysis.js?v=20261115c" defer></script>
-    <script src="assets/js/main.js?v=20261115c" defer></script>
+    <script src="assets/js/method.js?v=20261115d" defer></script>
+    <script src="assets/js/results-data.js?v=20261115d" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261115d" defer></script>
+    <script src="assets/js/results.js?v=20261115d" defer></script>
+    <script src="assets/js/radar.js?v=20261115d" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261115d" defer></script>
+    <script src="assets/js/analysis.js?v=20261115d" defer></script>
+    <script src="assets/js/main.js?v=20261115d" defer></script>
     <script src="assets/js/viewer.js?v=20261110-rootpath1" defer></script>
   </body>
 </html>

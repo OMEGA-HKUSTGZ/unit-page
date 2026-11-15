@@ -1,6 +1,6 @@
 // Key insights: the paper's three challenges and the modal-attention plug-in.
 // Each chapter's motivation exhibit is in index.html (the paradigm matrix of
-// Fig. 2 is drawn here); this script fills the evidence panel beside it, and
+// Fig. 2 and the curves of Figs. 6 and 8 are drawn here); this script fills the evidence panel beside it, and
 // the training-data strip in the Method section. Reads
 // assets/js/analysis-data.js (Tables 1, 11, 13, Figs. 2 and 12),
 // assets/js/results-data.js (Tables 3-9) and assets/js/longhorizon-data.js
@@ -33,18 +33,55 @@
   const pct = (a, b) => Math.round(((b - a) / a) * 100);
   const ord = (n) => `${n}${['th', 'st', 'nd', 'rd'][n % 10 > 3 || Math.floor(n / 10) === 1 ? 0 : n % 10]}`;
 
+  // The four sparse-depth patterns of Table 9, drawn as the samples a model
+  // would receive: light points on a dark depth image.
+  const DC_PATTERNS = {
+    Uniform: ['Uniform', 'random points'],
+    LiDAR: ['LiDAR', 'scan lines'],
+    SfM: ['SfM', 'feature points'],
+    Grid: ['Grid', 'regular lattice'],
+  };
+  function sparseIcon(kind) {
+    const W = 96;
+    const H = 60;
+    const svg = s('svg', { class: 'dc-i', viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+    let seed = 7;
+    const rnd = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    const pts = [];
+    if (kind === 'Uniform') {
+      for (let i = 0; i < 46; i += 1) pts.push([6 + rnd() * (W - 12), 6 + rnd() * (H - 12)]);
+    } else if (kind === 'LiDAR') {
+      // Beams fan out from the sensor: rows bend and spread towards the bottom.
+      [14, 23, 33, 45].forEach((y, r) => {
+        for (let i = 0; i <= 22; i += 1) {
+          const u = i / 22;
+          pts.push([5 + u * (W - 10), y + (r + 1) * 1.6 * (u - 0.5) ** 2 * 4]);
+        }
+      });
+    } else if (kind === 'SfM') {
+      // Features cluster on textured structure and leave flat regions empty.
+      [[22, 18, 9, 13], [66, 26, 12, 15], [40, 44, 8, 9], [80, 46, 6, 6]].forEach(([cx, cy, r, n]) => {
+        for (let i = 0; i < n; i += 1) {
+          const a = rnd() * Math.PI * 2;
+          const d = Math.sqrt(rnd()) * r;
+          pts.push([cx + Math.cos(a) * d * 1.3, cy + Math.sin(a) * d]);
+        }
+      });
+    } else {
+      for (let y = 0; y < 5; y += 1) for (let x = 0; x < 8; x += 1) pts.push([9 + x * 11.2, 8 + y * 11]);
+    }
+    pts.forEach(([x, y]) => s('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 1.5, style: `--d:${(y / H).toFixed(2)}` }, svg));
+    return svg;
+  }
+
   // One evidence block inside a chapter's panel: a title, a source and a body.
-  function block(parent, { title, src, note, table }) {
+  function block(parent, { title, src, note }) {
     const b = h('section', 'an-b');
     const head = h('header', 'an-bh');
-    let tag = h('span', 'an-src', src);
-    if (table) {
-      tag = h('button', 'an-src is-open', src);
-      tag.type = 'button';
-      tag.title = `Open ${src} from the paper`;
-      tag.addEventListener('click', () => document.querySelector(`[data-table-img="${table}"]`)?.click());
-    }
-    head.append(h('h4', 'an-bt', title), tag);
+    head.append(h('h4', 'an-bt', title), h('span', 'an-src', src));
     const body = h('div', 'an-bb');
     b.append(head, body);
     if (note) b.appendChild(h('p', 'an-note', note));
@@ -63,20 +100,11 @@
     return ul;
   };
 
-  // A figure taken from the paper, shown inside an evidence block.
-  function paperFig(parent, { src, w, h: ht, alt, cls = '' }) {
-    const f = h('div', `ins-fig ${cls}`);
-    const img = h('img');
-    Object.assign(img, { src, width: w, height: ht, alt, loading: 'lazy' });
-    f.appendChild(img);
-    parent.appendChild(f);
-  }
-
   // A line chart drawn at its real pixel width, with a shared hover read-out.
-  function lineChart(parent, { x, series, colors, yLo, yHi, yTicks, xLabel, mark, ends, H = 200 }) {
+  function lineChart(parent, { x, series, colors, yLo, yHi, yTicks, xLabel, mark, ends, H = 200, fmt = (v) => `${f3(v)} m`, tick = (t) => t.toFixed(3).replace(/0+$/, '').replace(/\.$/, ''), xTick = (v) => v, dots = true }) {
     const svgWrap = h('div', 'an-plot');
     svgWrap.style.height = `${H}px`;
-    const svg = s('svg', { class: 'an-svg', role: 'img', tabindex: '0', 'aria-label': `${xLabel}: ${Object.entries(series).map(([k, v]) => `${k} from ${f3(v[0])} to ${f3(v[v.length - 1])}`).join('; ')}` });
+    const svg = s('svg', { class: 'an-svg', role: 'img', tabindex: '0', 'aria-label': `${xLabel}: ${Object.entries(series).map(([k, v]) => `${k} from ${fmt(v[0])} to ${fmt(v[v.length - 1])}`).join('; ')}` });
     const tip = h('div', 'an-tip');
     const tipHead = h('div', 'an-tip-head');
     tip.appendChild(tipHead);
@@ -108,12 +136,12 @@
       Object.keys(series).forEach((k, j) => {
         const v = series[k][i];
         geo.dots[k].setAttribute('visibility', v === undefined ? 'hidden' : 'visible');
-        tipVals[j].textContent = v === undefined ? 'out of memory' : `${f3(v)} m`;
+        tipVals[j].textContent = v === undefined ? 'out of memory' : fmt(v);
         if (v === undefined) return;
         geo.dots[k].setAttribute('cx', px);
         geo.dots[k].setAttribute('cy', geo.ys(v));
       });
-      tipHead.textContent = `${xLabel.split(' (')[0]} = ${x[i]}`;
+      tipHead.textContent = `${xLabel.split(' (')[0]} = ${xTick(x[i])}`;
       const right = px < W / 2;
       tip.style.left = right ? `${px + 12}px` : '';
       tip.style.right = right ? '' : `${W - px + 12}px`;
@@ -132,12 +160,13 @@
       yTicks.forEach((t) => {
         s('line', { class: 'an-gridline', x1: x0, x2: x1, y1: ys(t), y2: ys(t) }, svg);
         const tl = s('text', { class: 'an-ytick', x: x0 - 8, y: ys(t) + 4 }, svg);
-        tl.textContent = t.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+        tl.textContent = tick(t);
       });
       x.forEach((v, i) => {
-        if (W < 380 && i % 2 === 1 && i !== x.length - 1) return;
+        if ((W < 380 || x.length > 12) && i % 2 === 1 && i !== x.length - 1) return;
+        if (W < 380 && x.length > 12 && i % 4 !== 0) return;
         const tl = s('text', { class: 'an-xtick', x: xs(i), y: y0 + 17 }, svg);
-        tl.textContent = v;
+        tl.textContent = xTick(v);
       });
       const xl = s('text', { class: 'an-xlabel', x: (x0 + x1) / 2, y: y0 + 33 }, svg);
       xl.textContent = xLabel;
@@ -152,7 +181,7 @@
       Object.entries(series).forEach(([k, vals]) => {
         const g = s('g', { class: 'an-series', style: `--c:${colors[k]}` }, svg);
         paths.push(s('path', { class: 'an-path', d: `M${vals.map((v, i) => `${xs(i)},${ys(v)}`).join(' L')}` }, g));
-        vals.forEach((v, i) => pts.push(s('circle', { class: 'an-pt', cx: xs(i), cy: ys(v), r: 2.8 }, g)));
+        if (dots) vals.forEach((v, i) => pts.push(s('circle', { class: 'an-pt', cx: xs(i), cy: ys(v), r: 2.8 }, g)));
         if (vals.length < x.length) {
           const o = s('g', { class: 'an-oom', transform: `translate(${xs(vals.length - 1)},${ys(vals[vals.length - 1])})` }, g);
           s('path', { d: 'M-5,-5 L5,5 M5,-5 L-5,5' }, o);
@@ -169,9 +198,9 @@
         });
       }
       const guide = s('line', { class: 'an-guide', y1, y2: y0 }, svg);
-      const dots = {};
+      const hdots = {};
       Object.keys(series).forEach((k) => {
-        dots[k] = s('circle', { class: 'an-hdot', r: 4.2, stroke: colors[k] }, svg);
+        hdots[k] = s('circle', { class: 'an-hdot', r: 4.2, stroke: colors[k] }, svg);
       });
       const hit = s('rect', { class: 'an-hit', x: x0 - 8, y: y1, width: x1 - x0 + 16, height: y0 - y1 }, svg);
       const idx = (clientX) => {
@@ -181,7 +210,7 @@
       };
       hit.addEventListener('pointermove', (e) => setHover(idx(e.clientX)));
       hit.addEventListener('pointerleave', () => setHover(-1));
-      geo = { xs, ys, guide, dots };
+      geo = { xs, ys, guide, dots: hdots };
       if (animate && !reduced) {
         paths.forEach((p) => {
           const len = p.getTotalLength();
@@ -326,7 +355,7 @@
         const best = Math.min(...Object.values(ranks));
         return { label: c.label, has, ranks, win: ranks.UniT === best };
       });
-      const body = block(P, { title: 'Every input combination', src: MM.table, table: 'multiModal', note: 'Average rank over nine metrics, metric scale. Shaded columns: UniT leads.' });
+      const body = block(P, { title: 'Every input combination', src: MM.table, note: 'Average rank over nine metrics, metric scale. Shaded columns: UniT leads.' });
       body.appendChild(legend(methods.map((m) => [m, MC[m] || '#999', 'dot'])));
       const up = h('div', 'an-up');
       up.style.setProperty('--n', combos.length);
@@ -423,14 +452,21 @@
 
       // Table 9: UniT's place for each sparse-depth pattern.
       const DC = R.depthCompletion;
-      const db = block(P, { title: 'Sparse depth in, dense depth out', src: DC.table, table: 'depthCompletion', note: 'Sintel, KITTI, NYUv2 · place by average rank among three methods' });
-      const quad = h('div', 'ins-quad');
+      const db = block(P, { title: 'Sparse depth in, dense depth out', src: DC.table, note: 'Sintel, KITTI, NYUv2 · average rank among three methods, 1 is best' });
+      const quad = h('div', 'dc');
       DC.conditions.forEach((c, i) => {
         const rows = [...c.groups[0].rows].sort((p, q) => p.rank - q.rank);
         const place = 1 + rows.findIndex((r) => r.method === 'UniT');
-        const cell = h('div', `ins-q${place === 1 ? ' is-first' : ''}`);
+        const unit = rows.find((r) => r.method === 'UniT');
+        const [name, what] = DC_PATTERNS[c.label] || [c.label, ''];
+        const cell = h('div', `dc-c${place === 1 ? ' is-first' : ''}`);
         cell.style.setProperty('--k', i);
-        cell.append(h('strong', '', ord(place)), h('span', '', c.label));
+        cell.title = rows.map((r) => `${r.method} ${r.rank.toFixed(2)}`).join(' · ');
+        const txt = h('p', 'dc-t');
+        txt.append(h('strong', '', name), h('span', '', what));
+        const res = h('p', 'dc-r');
+        res.append(h('strong', '', ord(place)), h('span', '', `avg. rank ${unit.rank.toFixed(2)}`));
+        cell.append(sparseIcon(c.label), txt, res);
         quad.appendChild(cell);
       });
       db.appendChild(quad);
@@ -502,18 +538,11 @@
       foot.append(h('span', 'an-rm-task', 'First place'), h('span', 'an-rm-tally is-metric', `${tally.metric[0]} of ${tally.metric[1]}`), h('span', 'an-rm-tally', `${tally.si[0]} of ${tally.si[1]}`));
       rm.appendChild(foot);
       body.appendChild(rm);
-
-      const qb = block(P, { title: 'Scale you can see', src: 'Fig. 10', note: 'Raw point clouds at one scene scale, no alignment.' });
-      paperFig(qb, {
-        src: 'assets/media/insights/fig10_qualitative.jpg', w: 1964, h: 794,
-        alt: 'Figure 10: multi-view reconstructions by ground truth, UniT (G = N), DepthAnything3, UniT (G = 1) and CUT3R, shown at a consistent scene scale.',
-      });
     }
   }
 
   // 02 Streaming memory: KITTI-Odometry (Table 7), sequence length on NRGBD
-  // (Fig. 11), queue capacity (Fig. 12, top) and the accuracy/efficiency
-  // trade-off (Fig. 13).
+  // (Fig. 11) and queue capacity (Fig. 12, top).
   {
     const P = ev('horizon');
     if (P) {
@@ -524,7 +553,7 @@
           ['vs. TTT3R', row('TTT3R'), row('UniT')],
           ['vs. VGGT-Long', row('VGGT-Long'), row('UniT-Long')],
         ];
-        const kb = block(P, { title: 'Kilometre-scale driving', src: K.table, table: 'kitti', note: `KITTI-Odometry · mean ATE (m) over ${K.sequences.length} sequences, lower is better` });
+        const kb = block(P, { title: 'Kilometre-scale driving', src: K.table, note: `KITTI-Odometry · mean ATE (m) over ${K.sequences.length} sequences, lower is better` });
         barRows(kb, {
           max: 200,
           ticks: [0, 50, 100, 150, 200],
@@ -535,13 +564,13 @@
         // Every sequence at a glance: filled where UniT has the lower error.
         const ks = h('div', 'ks');
         const kh = h('div', 'ks-row ks-head');
-        kh.appendChild(h('span', 'ks-l', 'Sequence'));
+        kh.appendChild(h('span', 'ks-l', 'Sequence, vs.'));
         K.sequences.forEach((q) => kh.appendChild(h('span', 'ks-id', q.id)));
         kh.appendChild(h('span', 'ks-n', 'UniT wins'));
         ks.appendChild(kh);
         pairs.forEach(([label, b, u]) => {
           const r = h('div', 'ks-row');
-          r.appendChild(h('span', 'ks-l', label));
+          r.appendChild(h('span', 'ks-l', b.method));
           let wins = 0;
           K.sequences.forEach((q, i) => {
             const win = u.values[i] < b.values[i];
@@ -576,11 +605,29 @@
         yLo: 0, yHi: 0.35, yTicks: [0, 0.1, 0.2, 0.3], xLabel: Qd.xLabel, H: 210,
         mark: { index: Qd.x.indexOf(30), label: 'Q = N/3' },
       }));
-      const tb = block(P, { title: 'Accuracy against cost', src: 'Fig. 13', note: 'NRGBD · 250 frames · one H100' });
-      paperFig(tb, {
-        src: 'assets/media/insights/fig13_tradeoff.png', w: 966, h: 621,
-        alt: 'Figure 13: pose error, runtime and memory against group size (left) and queue capacity (right) on NRGBD with 250 frames.',
-      });
+    }
+  }
+
+  // Motivation exhibits of chapters 02 and 03, redrawn from the paper's Fig. 6c
+  // and Fig. 8 (curves traced from the figures).
+  {
+    const at = document.querySelector('[data-attn]');
+    const Fa = A.attention;
+    if (at && Fa) {
+      onReveal('horizon', lineChart(at, {
+        x: Fa.x, series: Fa.series, colors: { StreamVGGT: '#9a948f', UniT: MC.UniT },
+        yLo: 0, yHi: 20, yTicks: [0, 5, 10, 15, 20], xLabel: 'query frame', H: 190,
+        fmt: (v) => `${v.toFixed(1)}%`, tick: (t) => `${t}%`, dots: false,
+      }));
+    }
+    const lc = document.querySelector('[data-losscurve]');
+    const Fl = A.lossCurve;
+    if (lc && Fl) {
+      onReveal('metric', lineChart(lc, {
+        x: Fl.x, series: Fl.series, colors: { 'Scale-invariant': C.si, 'Metric scale': C.ms },
+        yLo: 0, yHi: 1, yTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: 'training step', H: 200,
+        fmt: (v) => v.toFixed(2), tick: (t) => String(t), xTick: (v) => (v ? `${v / 1000}k` : '0'), dots: false,
+      }));
     }
   }
 

@@ -4,6 +4,8 @@
 // Fig. 12 is only given as a plot, so its curves were read from the marker
 // centres of the full-resolution figure (unchanged from Fig. 10 of the arXiv
 // version), calibrated on its gridlines; they are accurate to about ±0.001 m.
+// Figs. 6c and 8 are also only plots: their curves were traced from the figures
+// at the listed positions and show the trend, not exact values.
 window.UNIT_ANALYSIS = {
   loss: {
     table: 'Table 11',
@@ -19,6 +21,24 @@ window.UNIT_ANALYSIS = {
       { label: 'Scale-adaptive design', values: [0.044, 0.108, 0.069, 0.147], avg: 0.092 },
       { label: '+ Shuffled normal loss', values: [0.046, 0.108, 0.07, 0.141], avg: 0.091, ours: true },
     ],
+  },
+  attention: {
+    figure: 'Fig. 6',
+    // Mean attention deviation per query frame (%), 64 streamed frames.
+    x: [1, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64],
+    series: {
+      StreamVGGT: [0, 19.3, 18.6, 17.3, 16.6, 15.8, 14.7, 14.5, 15.3, 15.8, 15.3, 14.3, 13.5, 13.5, 13.0, 13.2, 16.2],
+      UniT: [0, 7.0, 8.7, 9.2, 9.5, 9.2, 8.8, 8.5, 8.2, 8.6, 8.0, 7.3, 7.1, 7.4, 7.3, 7.8, 11.0],
+    },
+  },
+  lossCurve: {
+    figure: 'Fig. 8',
+    // Normalized point loss (EMA) every 5,000 training steps.
+    x: [0, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70000, 75000, 80000],
+    series: {
+      'Scale-invariant': [1.0, 0.5, 0.22, 0.12, 0.085, 0.085, 0.06, 0.045, 0.04, 0.04, 0.045, 0.04, 0.04, 0.045, 0.045, 0.035, 0.03],
+      'Metric scale': [1.0, 0.78, 0.42, 0.25, 0.18, 0.2, 0.12, 0.1, 0.085, 0.075, 0.075, 0.065, 0.06, 0.065, 0.065, 0.055, 0.05],
+    },
   },
   queue: {
     figure: 'Fig. 12, top',
