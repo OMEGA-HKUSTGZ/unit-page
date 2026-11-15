@@ -1,5 +1,6 @@
 // Data for the Analysis section and the training-data strip, from the IJCV 2026
-// version of the paper. Tables 1 and 10-14 are copied from the paper's tables.
+// version of the paper. Tables 1 and 10-14 are copied from the paper's tables,
+// and the capability matrix from the check marks of Fig. 2.
 // Fig. 12 is only given as a plot, so its curves were read from the marker
 // centres of the full-resolution figure (unchanged from Fig. 10 of the arXiv
 // version), calibrated on its gridlines; they are accurate to about ±0.001 m.
@@ -88,6 +89,16 @@ window.UNIT_ANALYSIS = {
     rows: [
       { label: 'Specialized', values: [0.052, 0.113, 0.06, 0.184, 0.046, 0.097], avg: 0.092 },
       { label: 'Unified (UniT)', values: [0.046, 0.108, 0.07, 0.141, 0.046, 0.108], avg: 0.087, ours: true },
+    ],
+  },
+  paradigms: {
+    figure: 'Fig. 2',
+    capabilities: ['Online', 'Offline', 'Multi-modal', 'Long horizon', 'Metric scale'],
+    rows: [
+      { name: 'CUT3R', how: 'frame-by-frame recurrence', has: [true, false, false, true, true] },
+      { name: 'VGGT', how: 'joint offline inference', has: [false, true, false, false, false] },
+      { name: 'MapAnything', how: 'offline, plus modality and scale parts', has: [false, true, true, false, true] },
+      { name: 'UniT', how: 'next-group prediction', has: [true, true, true, true, true], ours: true },
     ],
   },
   data: {

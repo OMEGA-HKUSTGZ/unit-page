@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261111nav" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261115b" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -120,8 +120,8 @@
           <a href="#method">Method</a>
           <a href="#examples">Examples</a>
           <a href="#demo">Demo</a>
+          <a href="#analysis">Insights</a>
           <a href="#results">Results</a>
-          <a href="#analysis">Analysis</a>
           <a href="#citation">Citation</a>
         </nav>
       </section>
@@ -378,6 +378,203 @@
         </div>
       </section>
 
+      <section class="section container" id="analysis">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow"><span class="eyebrow-rule"></span>KEY INSIGHTS</p>
+            <h2>Three challenges, one formulation</h2>
+          </div>
+          <p>
+            Online, offline, multi-modal, long-horizon and metric-scale perception have grown
+            up as separate model families. The paper traces that split to three obstacles and
+            answers each with one idea. Every chapter below starts from what the paper
+            observed, then shows the idea and the experiment that tests it.
+          </p>
+        </div>
+
+        <div class="an">
+          <article class="an-ch ins" id="cap-views">
+            <header class="ins-head">
+              <p class="an-idx"><span class="an-n">01</span><span class="an-cap">Challenge · View configurations</span></p>
+              <h3>Online and offline models assume different things about their views</h3>
+            </header>
+            <ol class="ins-flow">
+              <li>
+                <span class="ins-k">Problem</span>
+                <p>
+                  Online models update geometry frame by frame; offline models reconstruct a
+                  whole set in one pass. Outside its own setting, the first aggregates many
+                  views poorly and the second recomputes everything for each new frame.
+                </p>
+              </li>
+              <li>
+                <span class="ins-k">Insight</span>
+                <p>
+                  Predict the next <em>group</em> of views. The group size G decides how many
+                  frames are processed together: G&nbsp;=&nbsp;1 is online, G&nbsp;=&nbsp;N is
+                  offline, and G&nbsp;=&nbsp;2 is a stereo rig, all with the same weights.
+                </p>
+                <a class="an-from" href="#method">Design <span>Group causal modeling</span></a>
+              </li>
+              <li class="is-result">
+                <span class="ins-k">Result</span>
+                <p class="ins-stat"><strong>0.087</strong><span>average error of the one unified model, against 0.092 for three models each trained for a single setting</span></p>
+              </li>
+            </ol>
+            <div class="ins-body">
+              <figure class="ins-motive">
+                <figcaption>
+                  <span class="ins-tag">Motivation</span>
+                  <span class="ins-mt">No existing paradigm covers all five capabilities</span>
+                  <span class="an-src">Fig. 2</span>
+                </figcaption>
+                <div data-paradigms></div>
+                <p class="ins-cap">
+                  The paper compares the formulations behind three representative models. Each
+                  ties its capabilities to its target use: frame-by-frame recurrence, joint
+                  offline inference, or offline inference with added modality and scale
+                  components. Group causal modeling is the only row with every box ticked.
+                </p>
+              </figure>
+              <div class="an-ev" data-an="views"></div>
+            </div>
+          </article>
+
+          <article class="an-ch ins" id="cap-horizon">
+            <header class="ins-head">
+              <p class="an-idx"><span class="an-n">02</span><span class="an-cap">Challenge · Streaming memory</span></p>
+              <h3>A streaming model's memory grows with every frame it has seen</h3>
+            </header>
+            <ol class="ins-flow">
+              <li>
+                <span class="ins-k">Problem</span>
+                <p>
+                  Streaming transformers keep every past frame in the KV cache, so memory and
+                  compute rise with sequence length. Old entries cannot simply be dropped,
+                  because the model keeps reading them.
+                </p>
+              </li>
+              <li>
+                <span class="ins-k">Insight</span>
+                <p>
+                  The dependence comes from the fixed first-frame reference. With anchor-free
+                  relative poses, each cache entry stands on its own, so the cache becomes a
+                  fixed-length queue and the cost per step is bounded by its capacity Q.
+                </p>
+                <a class="an-from" href="#method">Design <span>Queue-style KV caching</span></a>
+              </li>
+              <li class="is-result">
+                <span class="ins-k">Result</span>
+                <p class="ins-stat"><strong>5.1&nbsp;km</strong><span>of driving (4,661 frames) streamed in one pass on KITTI-Odometry; StreamVGGT runs out of memory on 9 of the 11 sequences</span></p>
+              </li>
+            </ol>
+            <div class="ins-body">
+              <figure class="ins-motive">
+                <figcaption>
+                  <span class="ins-tag">Motivation</span>
+                  <span class="ins-mt">An anchored model keeps looking back at the first frames</span>
+                  <span class="an-src">Fig. 6</span>
+                </figcaption>
+                <div class="ins-duo">
+                  <p><strong class="is-base">15.1%</strong><span>StreamVGGT, anchored to frame 1</span></p>
+                  <p><strong>8.0%</strong><span>UniT, anchor-free</span></p>
+                </div>
+                <div class="ins-fig">
+                  <img src="assets/media/insights/fig6_attention.png" width="957" height="713" loading="lazy" alt="Figure 6: global attention between query and key frames while streaming 64 frames, for StreamVGGT and UniT, and the mean attention deviation per query frame." />
+                </div>
+                <p class="ins-cap">
+                  Global attention while streaming 64 frames. StreamVGGT's attention piles up
+                  on the earliest key frames (the dark left edge); UniT spreads it more evenly.
+                  The numbers are the mean attention deviation per query frame from panel (c).
+                </p>
+              </figure>
+              <div class="an-ev" data-an="horizon"></div>
+            </div>
+          </article>
+
+          <article class="an-ch ins" id="cap-metric">
+            <header class="ins-head">
+              <p class="an-idx"><span class="an-n">03</span><span class="an-cap">Challenge · Metric scale</span></p>
+              <h3>Metric scale is much harder to learn than relative geometry</h3>
+            </header>
+            <ol class="ins-flow">
+              <li>
+                <span class="ins-k">Problem</span>
+                <p>
+                  Absolute scale spans a large dynamic range and transfers poorly between
+                  scenes. Many models avoid it with scale-invariant objectives, or add a
+                  separate module that estimates a scale factor.
+                </p>
+              </li>
+              <li>
+                <span class="ins-k">Insight</span>
+                <p>
+                  Split the metric objective into scale-invariant constraints plus a partial
+                  metric term. The scale then has a closed-form solution, no scale module is
+                  needed, and training moves from the easy part to the hard part on its own.
+                </p>
+                <a class="an-from" href="#method">Design <span>Scale-adaptive geometry loss</span></a>
+              </li>
+              <li class="is-result">
+                <span class="ins-k">Result</span>
+                <p class="ins-stat"><strong>7 / 7</strong><span>metric-scale comparisons in Tables&nbsp;3–6 in which UniT has the best average rank, offline and online</span></p>
+              </li>
+            </ol>
+            <div class="ins-body">
+              <figure class="ins-motive">
+                <figcaption>
+                  <span class="ins-tag">Motivation</span>
+                  <span class="ins-mt">Relative geometry is learned first; metric scale follows</span>
+                  <span class="an-src">Fig. 8</span>
+                </figcaption>
+                <div class="ins-fig">
+                  <img src="assets/media/insights/fig8_loss_curves.png" width="960" height="662" loading="lazy" alt="Figure 8: normalized training loss over 80,000 steps. The scale-invariant point loss falls quickly; the metric-scale point loss converges more gradually." />
+                </div>
+                <p class="ins-cap">
+                  Training curves of the two point losses, each normalized by its starting
+                  value. The scale-invariant loss drops quickly and the metric-scale loss
+                  converges more gradually: the curriculum the loss is designed to produce,
+                  without a schedule.
+                </p>
+              </figure>
+              <div class="an-ev" data-an="metric"></div>
+            </div>
+          </article>
+
+          <article class="an-ch ins" id="cap-modality">
+            <header class="ins-head">
+              <p class="an-idx"><span class="an-n">+</span><span class="an-cap">Plug-in · Auxiliary modalities</span></p>
+              <h3>Camera parameters and depth plug in, in any combination</h3>
+            </header>
+            <ol class="ins-flow">
+              <li>
+                <span class="ins-k">Problem</span>
+                <p>
+                  Real platforms often know their intrinsics or poses, or carry a depth
+                  sensor. A unified model should use whichever of these is present.
+                </p>
+              </li>
+              <li>
+                <span class="ins-k">Design</span>
+                <p>
+                  Modal attention turns depth and intrinsics into point tokens and extrinsics
+                  into pose tokens, and fuses them with image tokens at aligned pixels. It is
+                  inserted four times and adds about 3% of the parameters.
+                </p>
+                <a class="an-from" href="#method">Design <span>Modal attention</span></a>
+              </li>
+              <li class="is-result">
+                <span class="ins-k">Result</span>
+                <p class="ins-stat"><strong>5 / 7</strong><span>combinations of intrinsics, extrinsics and depth in which UniT has the best average rank</span></p>
+              </li>
+            </ol>
+            <div class="ins-body is-solo">
+              <div class="an-ev" data-an="modality"></div>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <section class="section container" id="results">
         <div class="section-heading">
           <div>
@@ -500,81 +697,6 @@
         </div>
       </section>
 
-      <section class="section container" id="analysis">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow"><span class="eyebrow-rule"></span>ANALYSIS</p>
-            <h2>Where each capability comes from</h2>
-          </div>
-          <p>
-            The four capabilities from the overview, each traced to the design behind it and
-            checked against the paper's own numbers: the benchmark tables (Tables&nbsp;3–8) and
-            the ablations (Tables&nbsp;10–14 and Fig.&nbsp;12).
-          </p>
-        </div>
-
-        <div class="an">
-          <article class="an-ch" id="cap-views">
-            <div class="an-claim">
-              <p class="an-idx"><span class="an-n">01</span><span class="an-cap">Any view configuration</span></p>
-              <h3>One model, from streaming video to offline sets</h3>
-              <p class="an-stat"><strong>−16%</strong><span>camera-pose error going from G&nbsp;=&nbsp;1 (online) to G&nbsp;=&nbsp;90 (offline) with the same model</span></p>
-              <p class="an-why">
-                Group causal modeling makes the group size a choice at inference time. Larger
-                groups let more frames attend to each other in both directions, and the error falls
-                steadily across the whole range, with no cliff in between.
-              </p>
-              <a class="an-from" href="#method">Design <span>Group causal modeling</span></a>
-            </div>
-            <div class="an-ev" data-an="views"></div>
-          </article>
-
-          <article class="an-ch" id="cap-modality">
-            <div class="an-claim">
-              <p class="an-idx"><span class="an-n">02</span><span class="an-cap">Any modality combination</span></p>
-              <h3>Extra sensors plug in, in any combination</h3>
-              <p class="an-stat"><strong>5 / 7</strong><span>combinations of intrinsics, extrinsics and depth in which UniT has the best average rank</span></p>
-              <p class="an-why">
-                Modal attention turns depth and intrinsics into point tokens and extrinsics into pose
-                tokens, then fuses them with image tokens at aligned pixels, so any subset can be
-                given at test time. Against simpler ways of fusing them it has the lowest average error.
-              </p>
-              <a class="an-from" href="#method">Design <span>Modal attention</span></a>
-            </div>
-            <div class="an-ev" data-an="modality"></div>
-          </article>
-
-          <article class="an-ch" id="cap-metric">
-            <div class="an-claim">
-              <p class="an-idx"><span class="an-n">03</span><span class="an-cap">Metric-scale perception</span></p>
-              <h3>Geometry in metres, where UniT leads every benchmark</h3>
-              <p class="an-stat"><strong>7 / 7</strong><span>metric-scale comparisons in Tables&nbsp;3–6 in which UniT has the best average rank, offline and online</span></p>
-              <p class="an-why">
-                Regressing metric geometry directly is hard to optimise. The scale-adaptive loss
-                learns relative geometry first and adds a partial absolute term, so metric scale
-                comes without giving up shape.
-              </p>
-              <a class="an-from" href="#method">Design <span>Scale-adaptive geometry loss</span></a>
-            </div>
-            <div class="an-ev" data-an="metric"></div>
-          </article>
-
-          <article class="an-ch" id="cap-horizon">
-            <div class="an-claim">
-              <p class="an-idx"><span class="an-n">04</span><span class="an-cap">Long-horizon scalability</span></p>
-              <h3>Memory that stays bounded as the sequence grows</h3>
-              <p class="an-stat"><strong>N/3</strong><span>of the frames in the KV-cache queue keep pose error within 0.002&nbsp;m of caching them all</span></p>
-              <p class="an-why">
-                Anchor-free relative poses mean no frame has to stay in memory for good, so the queue
-                drops old tokens once it is full. Dropping by stride stays closest to a full cache.
-              </p>
-              <a class="an-from" href="#method">Design <span>Queue-style KV caching</span></a>
-            </div>
-            <div class="an-ev" data-an="horizon"></div>
-          </article>
-        </div>
-      </section>
-
       <section class="section section-tint" id="citation">
         <div class="container">
           <p class="eyebrow"><span class="eyebrow-rule"></span>CITATION</p>
@@ -605,14 +727,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/main.js?v=20261107s" defer></script>
     <script src="assets/js/method.js?v=20261115" defer></script>
     <script src="assets/js/results-data.js?v=20261115" defer></script>
     <script src="assets/js/longhorizon-data.js?v=20261115" defer></script>
     <script src="assets/js/results.js?v=20261115" defer></script>
     <script src="assets/js/radar.js?v=20261115" defer></script>
     <script src="assets/js/analysis-data.js?v=20261115" defer></script>
-    <script src="assets/js/analysis.js?v=20261115" defer></script>
+    <script src="assets/js/analysis.js?v=20261115b" defer></script>
+    <script src="assets/js/main.js?v=20261115b" defer></script>
     <script src="assets/js/viewer.js?v=20261110-rootpath1" defer></script>
   </body>
 </html>

@@ -1,6 +1,9 @@
-// Analysis: the four capabilities, each with the evidence for it, plus the
-// training-data strip in the Method section. Reads assets/js/analysis-data.js
-// (Tables 1, 10-14 and Fig. 12) and assets/js/results-data.js (Tables 3-8).
+// Key insights: the paper's three challenges and the modal-attention plug-in.
+// Each chapter's motivation exhibit is in index.html (the paradigm matrix of
+// Fig. 2 is drawn here); this script fills the evidence panel beside it, and
+// the training-data strip in the Method section. Reads
+// assets/js/analysis-data.js (Tables 1, 10-14, Figs. 2 and 12) and
+// assets/js/results-data.js (Tables 3-8).
 // Every block has a fixed size; values enter once, when a chapter first
 // scrolls into view, and only transforms and opacity animate.
 (() => {
@@ -52,6 +55,15 @@
     });
     return ul;
   };
+
+  // A figure taken from the paper, shown inside an evidence block.
+  function paperFig(parent, { src, w, h: ht, alt, cls = '' }) {
+    const f = h('div', `ins-fig ${cls}`);
+    const img = h('img');
+    Object.assign(img, { src, width: w, height: ht, alt, loading: 'lazy' });
+    f.appendChild(img);
+    parent.appendChild(f);
+  }
 
   // A line chart drawn at its real pixel width, with a shared hover read-out.
   function lineChart(parent, { x, series, colors, yLo, yHi, yTicks, xLabel, mark, band, ends, H = 200 }) {
@@ -209,7 +221,7 @@
     const x = (v) => Math.max(0, v) / max;
     const axis = h('div', 'an-baxis');
     ticks.forEach((t) => {
-      const tk = h('span', 'an-btick', t === 0 ? '0' : t.toFixed(3).replace(/0+$/, ''));
+      const tk = h('span', 'an-btick', t === 0 ? '0' : t.toFixed(3).replace(/0+$/, '').replace(/\.$/, ''));
       tk.style.setProperty('--x', x(t));
       axis.appendChild(tk);
     });
@@ -286,8 +298,8 @@
       const b2 = B.rows.find((r) => r.ours);
       const bb = block(P, {
         title: 'Two cameras per step',
-        src: B.table,
-        note: `${B.table}. ${B.note} Bars show ATE (m). Translation RPE falls the same way; rotation RPE is lower for TTT3R (${bt.values[0][2].toFixed(2)} against ${b2.values[0][2].toFixed(2)} for G = 2).`,
+        src: `${B.table} · Fig. 14`,
+        note: `${B.table} and Fig. 14. ${B.note} Bars show ATE (m). Translation RPE falls the same way; rotation RPE is lower for TTT3R (${bt.values[0][2].toFixed(2)} against ${b2.values[0][2].toFixed(2)} for G = 2).`,
       });
       barRows(bb, {
         max: 0.7,
@@ -295,6 +307,10 @@
         keys: [{ label: 'Scale-invariant', color: C.si }, { label: 'Metric scale', color: C.ms }],
         unit: (v) => f3(v),
         rows: B.rows.map((r) => ({ label: r.label, bars: [r.values[0][0], r.values[1][0]], ours: r.ours })),
+      });
+      paperFig(bb, {
+        src: 'assets/media/insights/fig14_binocular.jpg', w: 977, h: 920, cls: 'is-half',
+        alt: 'Figure 14: binocular streaming on an ETH3D-SLAM sequence. UniT with G = 2 reconstructs the room and its trajectory follows the ground truth more closely than UniT with G = 1 or TTT3R.',
       });
 
       const U = A.unified;
@@ -502,6 +518,29 @@
         const next = [...others].sort((a, b) => a.rank - b.rank)[0];
         return { n: better + 1, tie, of: rows.length, u: u.rank, next };
       };
+      // Table 11: loss.
+      const L = A.loss;
+      const a = L.rows[0].values;
+      const c = L.rows[2].values;
+      const order = [3, 1, 0, 2];
+      const lb = block(P, {
+        title: 'Against regressing metric scale directly',
+        src: L.table,
+        note: `${L.table}. ${L.note} The scale-adaptive design alone already brings metric-scale error to ${f3(L.rows[1].values[3])} online and ${f3(L.rows[1].values[1])} offline; the shuffled normal loss adds a global regulariser on top.`,
+      });
+      barRows(lb, {
+        max: 0.45,
+        ticks: [0, 0.1, 0.2, 0.3, 0.4],
+        keys: [{ label: 'Direct metric regression', color: C.base }, { label: 'UniT loss', color: C.ms }],
+        unit: (v) => f3(v),
+        rows: order.map((j) => ({
+          label: `${L.columns[j][0]} · ${L.columns[j][1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
+          bars: [a[j], c[j]],
+          ours: j % 2 === 1,
+          tag: `${pct(a[j], c[j]) > 0 ? '+' : '−'}${Math.abs(pct(a[j], c[j]))}%`,
+          tagCls: pct(a[j], c[j]) <= -30 ? 'is-big' : '',
+        })),
+      });
       const body = block(P, {
         title: 'UniT’s place among all methods',
         src: 'Tables 3–6',
@@ -540,36 +579,50 @@
       rm.appendChild(foot);
       body.appendChild(rm);
 
-      // Table 11: loss.
-      const L = A.loss;
-      const a = L.rows[0].values;
-      const c = L.rows[2].values;
-      const order = [3, 1, 0, 2];
-      const lb = block(P, {
-        title: 'Where it comes from: the loss',
-        src: L.table,
-        note: `${L.table}. ${L.note} The scale-adaptive design alone already brings metric-scale error to ${f3(L.rows[1].values[3])} online and ${f3(L.rows[1].values[1])} offline; the shuffled normal loss adds a global regulariser on top.`,
+      const qb = block(P, {
+        title: 'Scale you can see',
+        src: 'Fig. 10',
+        note: 'Fig. 10. Raw point clouds with no alignment or filtering; each row is drawn at one scene scale, so a wrong metric scale shows up as a wrong size.',
       });
-      barRows(lb, {
-        max: 0.45,
-        ticks: [0, 0.1, 0.2, 0.3, 0.4],
-        keys: [{ label: 'Direct metric regression', color: C.base }, { label: 'UniT loss', color: C.ms }],
-        unit: (v) => f3(v),
-        rows: order.map((j) => ({
-          label: `${L.columns[j][0]} · ${L.columns[j][1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
-          bars: [a[j], c[j]],
-          ours: j % 2 === 1,
-          tag: `${pct(a[j], c[j]) > 0 ? '+' : '−'}${Math.abs(pct(a[j], c[j]))}%`,
-          tagCls: pct(a[j], c[j]) <= -30 ? 'is-big' : '',
-        })),
+      paperFig(qb, {
+        src: 'assets/media/insights/fig10_qualitative.jpg', w: 1964, h: 794,
+        alt: 'Figure 10: multi-view reconstructions by ground truth, UniT (G = N), DepthAnything3, UniT (G = 1) and CUT3R, shown at a consistent scene scale.',
       });
     }
   }
 
-  // 04 Long horizon: queue capacity (Fig. 12, top) and drop strategy (Table 12).
+  // 02 Long horizon: KITTI-Odometry (Table 7), queue capacity (Fig. 12, top),
+  // drop strategy (Table 12) and the accuracy/efficiency trade-off (Fig. 13).
   {
     const P = ev('horizon');
     if (P) {
+      const K = R && R.kitti;
+      if (K) {
+        const row = (m) => K.rows.find((r) => r.method === m);
+        const oom = row('StreamVGGT').values.filter((v) => v === null).length;
+        const longest = K.sequences.reduce((a, b) => (b.frames > a.frames ? b : a));
+        const pairs = [
+          ['One streaming pass', row('TTT3R'), row('UniT')],
+          ['In chunks (VGGT-Long)', row('VGGT-Long'), row('UniT-Long')],
+        ];
+        const kb = block(P, {
+          title: 'Kilometre-scale driving',
+          src: K.table,
+          note: `${K.table}. Mean scale-aligned ATE (m) over the ${K.sequences.length} KITTI-Odometry sequences, up to ${longest.frames.toLocaleString('en-US')} frames and ${longest.km} km. StreamVGGT, which caches every frame, runs out of memory on ${oom} of them. UniT also drops into the VGGT-Long framework, which splits a trajectory into overlapping chunks.`,
+        });
+        barRows(kb, {
+          max: 200,
+          ticks: [0, 50, 100, 150, 200],
+          keys: [{ label: 'Best baseline (TTT3R, VGGT-Long)', color: C.base }, { label: 'UniT', color: C.ms }],
+          unit: (v) => v.toFixed(1),
+          rows: pairs.map(([label, b, u]) => ({ label, bars: [b.avg, u.avg], tag: `−${Math.abs(pct(b.avg, u.avg))}%`, tagCls: 'is-big' })),
+        });
+        const km = h('p', 'an-more is-in');
+        const ka = h('a', '', 'All 11 sequences');
+        ka.href = '#rx-long-detail';
+        km.appendChild(ka);
+        kb.appendChild(km);
+      }
       const Qd = A.queue;
       const i30 = Qd.x.indexOf(30);
       const body = block(P, {
@@ -595,11 +648,47 @@
         unit: (v) => signed(v),
         rows: D.rows.map((r) => ({ label: r.label, bars: r.values.map((v, j) => Number((v - D.full[j]).toFixed(3))), ours: r.ours })),
       });
-      const more = h('p', 'an-more');
-      const btn = h('a', '', '500 indoor frames and kilometres of driving: Results, Long horizon');
-      btn.href = '#rx-long';
-      more.appendChild(btn);
-      P.appendChild(more);
+      const tb = block(P, {
+        title: 'What accuracy costs',
+        src: 'Fig. 13',
+        note: 'Fig. 13. Pose error, runtime and peak memory on NRGBD (250 frames, one H100) as the group size and the queue capacity grow. Both buy accuracy with compute. Memory falls at G = 250 because the offline setting stores no cache, so the paper recommends offline inference for short sequences and streaming for long ones.',
+      });
+      paperFig(tb, {
+        src: 'assets/media/insights/fig13_tradeoff.png', w: 966, h: 621,
+        alt: 'Figure 13: pose error, runtime and memory against group size (left) and queue capacity (right) on NRGBD with 250 frames.',
+      });
+    }
+  }
+
+  // Fig. 2 as a matrix: which capabilities each formulation covers.
+  {
+    const host = document.querySelector('[data-paradigms]');
+    const Pd = A.paradigms;
+    if (host && Pd) {
+      const t = h('table', 'pm');
+      const hr = h('tr');
+      hr.appendChild(h('th', 'pm-m', ''));
+      Pd.capabilities.forEach((c) => hr.appendChild(h('th', '', c)));
+      const thead = h('thead');
+      thead.appendChild(hr);
+      const tb = h('tbody');
+      Pd.rows.forEach((r) => {
+        const tr = h('tr', r.ours ? 'is-ours' : '');
+        const th = h('th', 'pm-m');
+        th.scope = 'row';
+        th.append(h('strong', '', r.name), h('span', '', r.how));
+        tr.appendChild(th);
+        r.has.forEach((on, j) => {
+          const td = h('td', on ? 'is-on' : '');
+          const mk = h('span', 'pm-mark', on ? '✓' : '×');
+          mk.setAttribute('aria-label', `${Pd.capabilities[j]}: ${on ? 'yes' : 'no'}`);
+          td.appendChild(mk);
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      });
+      t.append(thead, tb);
+      host.appendChild(t);
     }
   }
 
