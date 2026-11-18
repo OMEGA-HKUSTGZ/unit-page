@@ -44,6 +44,67 @@ document.querySelectorAll('[data-tabs]').forEach((root) => {
   });
 });
 
+// Lab navigation on narrow screens: the same menu button as the lab site's header.
+(() => {
+  const toggle = document.querySelector('.menu-toggle');
+  const nav = document.getElementById('main-nav');
+  if (!toggle || !nav) return;
+  const set = (open) => {
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+    nav.classList.toggle('is-open', open);
+  };
+  toggle.addEventListener('click', () => set(toggle.getAttribute('aria-expanded') !== 'true'));
+  nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => set(false)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+      set(false);
+      toggle.focus();
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!nav.classList.contains('is-open')) return;
+    if (!nav.contains(e.target) && !toggle.contains(e.target)) set(false);
+  });
+})();
+
+// Section bar: mark the section being read, and keep its link in view when the bar scrolls
+// sideways on a phone.
+(() => {
+  const bar = document.querySelector('.chapters');
+  if (!bar || !('IntersectionObserver' in window)) return;
+  const links = new Map(
+    [...bar.querySelectorAll('a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]),
+  );
+  const sections = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
+  const shown = new Set();
+  let current = null;
+  const mark = () => {
+    // The first section, in page order, that crosses the reading line.
+    const id = sections.find((s) => shown.has(s.id))?.id || null;
+    if (id === current) return;
+    current = id;
+    links.forEach((a, key) => {
+      if (key === id) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    });
+    const a = id && links.get(id);
+    if (a && bar.scrollWidth > bar.clientWidth) {
+      const left = a.offsetLeft - (bar.clientWidth - a.offsetWidth) / 2;
+      bar.scrollTo({ left, behavior: reducedMotion ? 'auto' : 'smooth' });
+    }
+  };
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => (e.isIntersecting ? shown.add(e.target.id) : shown.delete(e.target.id)));
+      mark();
+    },
+    // A thin line about a third of the way down the screen.
+    { rootMargin: '-33% 0px -66% 0px' },
+  );
+  sections.forEach((s) => io.observe(s));
+})();
+
 // Copy BibTeX.
 document.querySelectorAll('[data-copy]').forEach((button) => {
   button.addEventListener('click', async () => {
