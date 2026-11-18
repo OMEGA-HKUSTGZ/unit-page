@@ -1,6 +1,10 @@
-// Analysis: the four capabilities, each with the evidence for it, plus the
-// training-data strip in the Method section. Reads assets/js/analysis-data.js
-// (Tables 1, 9-11 and Fig. 10) and assets/js/results-data.js (Tables 3-7).
+// Key insights: the paper's three challenges and the modal-attention plug-in.
+// Each chapter's motivation exhibit is in index.html (the paradigm matrix of
+// Fig. 2 and the curves of Figs. 6 and 8 are drawn here); this script fills the evidence panel beside it, and
+// the training-data strip in the Method section. Reads
+// assets/js/analysis-data.js (Tables 1, 11, 13, Figs. 2 and 12, bottom),
+// assets/js/results-data.js (Tables 3-9) and assets/js/longhorizon-data.js
+// (Fig. 11).
 // Every block has a fixed size; values enter once, when a chapter first
 // scrolls into view, and only transforms and opacity animate.
 (() => {
@@ -26,9 +30,52 @@
     return n;
   };
   const f3 = (v) => v.toFixed(3);
-  const signed = (v) => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(3)}`;
   const pct = (a, b) => Math.round(((b - a) / a) * 100);
   const ord = (n) => `${n}${['th', 'st', 'nd', 'rd'][n % 10 > 3 || Math.floor(n / 10) === 1 ? 0 : n % 10]}`;
+
+  // The four sparse-depth patterns of Table 9, drawn as the samples a model
+  // would receive: light points on a dark depth image.
+  const DC_PATTERNS = {
+    Uniform: ['Uniform', 'random points'],
+    LiDAR: ['LiDAR', 'scan lines'],
+    SfM: ['SfM', 'feature points'],
+    Grid: ['Grid', 'regular lattice'],
+  };
+  function sparseIcon(kind) {
+    const W = 96;
+    const H = 60;
+    const svg = s('svg', { class: 'dc-i', viewBox: `0 0 ${W} ${H}`, 'aria-hidden': 'true' });
+    let seed = 7;
+    const rnd = () => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    const pts = [];
+    if (kind === 'Uniform') {
+      for (let i = 0; i < 46; i += 1) pts.push([6 + rnd() * (W - 12), 6 + rnd() * (H - 12)]);
+    } else if (kind === 'LiDAR') {
+      // Beams fan out from the sensor: rows bend and spread towards the bottom.
+      [14, 23, 33, 45].forEach((y, r) => {
+        for (let i = 0; i <= 22; i += 1) {
+          const u = i / 22;
+          pts.push([5 + u * (W - 10), y + (r + 1) * 1.6 * (u - 0.5) ** 2 * 4]);
+        }
+      });
+    } else if (kind === 'SfM') {
+      // Features cluster on textured structure and leave flat regions empty.
+      [[22, 18, 9, 13], [66, 26, 12, 15], [40, 44, 8, 9], [80, 46, 6, 6]].forEach(([cx, cy, r, n]) => {
+        for (let i = 0; i < n; i += 1) {
+          const a = rnd() * Math.PI * 2;
+          const d = Math.sqrt(rnd()) * r;
+          pts.push([cx + Math.cos(a) * d * 1.3, cy + Math.sin(a) * d]);
+        }
+      });
+    } else {
+      for (let y = 0; y < 5; y += 1) for (let x = 0; x < 8; x += 1) pts.push([9 + x * 11.2, 8 + y * 11]);
+    }
+    pts.forEach(([x, y]) => s('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 1.5, style: `--d:${(y / H).toFixed(2)}` }, svg));
+    return svg;
+  }
 
   // One evidence block inside a chapter's panel: a title, a source and a body.
   function block(parent, { title, src, note }) {
@@ -54,10 +101,10 @@
   };
 
   // A line chart drawn at its real pixel width, with a shared hover read-out.
-  function lineChart(parent, { x, series, colors, yLo, yHi, yTicks, xLabel, mark, band, ends, H = 200 }) {
+  function lineChart(parent, { x, series, colors, yLo, yHi, yTicks, xLabel, mark, ends, H = 200, fmt = (v) => `${f3(v)} m`, tick = (t) => t.toFixed(3).replace(/0+$/, '').replace(/\.$/, ''), xTick = (v) => v, dots = true }) {
     const svgWrap = h('div', 'an-plot');
     svgWrap.style.height = `${H}px`;
-    const svg = s('svg', { class: 'an-svg', role: 'img', tabindex: '0', 'aria-label': `${xLabel}: ${Object.entries(series).map(([k, v]) => `${k} from ${f3(v[0])} to ${f3(v[v.length - 1])}`).join('; ')}` });
+    const svg = s('svg', { class: 'an-svg', role: 'img', tabindex: '0', 'aria-label': `${xLabel}: ${Object.entries(series).map(([k, v]) => `${k} from ${fmt(v[0])} to ${fmt(v[v.length - 1])}`).join('; ')}` });
     const tip = h('div', 'an-tip');
     const tipHead = h('div', 'an-tip-head');
     tip.appendChild(tipHead);
@@ -87,11 +134,14 @@
       geo.guide.setAttribute('x1', px);
       geo.guide.setAttribute('x2', px);
       Object.keys(series).forEach((k, j) => {
+        const v = series[k][i];
+        geo.dots[k].setAttribute('visibility', v === undefined ? 'hidden' : 'visible');
+        tipVals[j].textContent = v === undefined ? 'out of memory' : fmt(v);
+        if (v === undefined) return;
         geo.dots[k].setAttribute('cx', px);
-        geo.dots[k].setAttribute('cy', geo.ys(series[k][i]));
-        tipVals[j].textContent = `${f3(series[k][i])} m`;
+        geo.dots[k].setAttribute('cy', geo.ys(v));
       });
-      tipHead.textContent = `${xLabel.split(' (')[0]} = ${x[i]}`;
+      tipHead.textContent = `${xLabel.split(' (')[0]} = ${xTick(x[i])}`;
       const right = px < W / 2;
       tip.style.left = right ? `${px + 12}px` : '';
       tip.style.right = right ? '' : `${W - px + 12}px`;
@@ -107,21 +157,16 @@
       const y1 = M.t;
       const xs = (i) => x0 + (i / (x.length - 1)) * (x1 - x0);
       const ys = (v) => y0 - ((v - yLo) / (yHi - yLo)) * (y0 - y1);
-      if (band) {
-        const bx = xs(band.from);
-        s('rect', { class: 'an-band', x: bx, y: y1, width: x1 - bx, height: y0 - y1 }, svg);
-        const bt = s('text', { class: 'an-band-t', x: x1 - 6, y: y1 + 14 }, svg);
-        bt.textContent = band.label;
-      }
       yTicks.forEach((t) => {
         s('line', { class: 'an-gridline', x1: x0, x2: x1, y1: ys(t), y2: ys(t) }, svg);
         const tl = s('text', { class: 'an-ytick', x: x0 - 8, y: ys(t) + 4 }, svg);
-        tl.textContent = t.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+        tl.textContent = tick(t);
       });
       x.forEach((v, i) => {
-        if (W < 380 && i % 2 === 1 && i !== x.length - 1) return;
+        if ((W < 380 || x.length > 12) && i % 2 === 1 && i !== x.length - 1) return;
+        if (W < 380 && x.length > 12 && i % 4 !== 0) return;
         const tl = s('text', { class: 'an-xtick', x: xs(i), y: y0 + 17 }, svg);
-        tl.textContent = v;
+        tl.textContent = xTick(v);
       });
       const xl = s('text', { class: 'an-xlabel', x: (x0 + x1) / 2, y: y0 + 33 }, svg);
       xl.textContent = xLabel;
@@ -136,20 +181,26 @@
       Object.entries(series).forEach(([k, vals]) => {
         const g = s('g', { class: 'an-series', style: `--c:${colors[k]}` }, svg);
         paths.push(s('path', { class: 'an-path', d: `M${vals.map((v, i) => `${xs(i)},${ys(v)}`).join(' L')}` }, g));
-        vals.forEach((v, i) => pts.push(s('circle', { class: 'an-pt', cx: xs(i), cy: ys(v), r: 2.8 }, g)));
+        if (dots) vals.forEach((v, i) => pts.push(s('circle', { class: 'an-pt', cx: xs(i), cy: ys(v), r: 2.8 }, g)));
+        if (vals.length < x.length) {
+          const o = s('g', { class: 'an-oom', transform: `translate(${xs(vals.length - 1)},${ys(vals[vals.length - 1])})` }, g);
+          s('path', { d: 'M-5,-5 L5,5 M5,-5 L-5,5' }, o);
+          const ot = s('text', { x: 9, y: -8 }, o);
+          ot.textContent = 'out of memory';
+        }
       });
       if (ends) {
         ends.forEach(({ index, label }) => {
           const ex = xs(index);
-          const ey = ys(Math.max(...Object.values(series).map((v) => v[index]))) - 12;
+          const ey = ys(Math.max(...Object.values(series).map((v) => v[index]).filter((v) => v !== undefined))) - 12;
           const et = s('text', { class: `an-end${index === 0 ? '' : ' an-end-r'}`, x: index === 0 ? ex - 4 : ex + 4, y: ey }, svg);
           et.textContent = label;
         });
       }
       const guide = s('line', { class: 'an-guide', y1, y2: y0 }, svg);
-      const dots = {};
+      const hdots = {};
       Object.keys(series).forEach((k) => {
-        dots[k] = s('circle', { class: 'an-hdot', r: 4.2, stroke: colors[k] }, svg);
+        hdots[k] = s('circle', { class: 'an-hdot', r: 4.2, stroke: colors[k] }, svg);
       });
       const hit = s('rect', { class: 'an-hit', x: x0 - 8, y: y1, width: x1 - x0 + 16, height: y0 - y1 }, svg);
       const idx = (clientX) => {
@@ -159,7 +210,7 @@
       };
       hit.addEventListener('pointermove', (e) => setHover(idx(e.clientX)));
       hit.addEventListener('pointerleave', () => setHover(-1));
-      geo = { xs, ys, guide, dots };
+      geo = { xs, ys, guide, dots: hdots };
       if (animate && !reduced) {
         paths.forEach((p) => {
           const len = p.getTotalLength();
@@ -209,7 +260,7 @@
     const x = (v) => Math.max(0, v) / max;
     const axis = h('div', 'an-baxis');
     ticks.forEach((t) => {
-      const tk = h('span', 'an-btick', t === 0 ? '0' : t.toFixed(3).replace(/0+$/, ''));
+      const tk = h('span', 'an-btick', t === 0 ? '0' : t.toFixed(3).replace(/0+$/, '').replace(/\.$/, ''));
       tk.style.setProperty('--x', x(t));
       axis.appendChild(tk);
     });
@@ -256,33 +307,41 @@
     return panel;
   };
 
-  // 01 Any view: group size (Fig. 10, bottom).
+  // 01 View configurations: group size (Fig. 12, bottom) and unified against
+  // specialized models (Table 13).
   {
     const P = ev('views');
     const G = A.group;
     if (P) {
-      const body = block(P, {
-        title: 'Pose error as the group grows',
-        src: G.figure,
-        note: `Camera-pose ATE (m) on ScanNetV2, 90 frames, read from the figure (about ±0.001). G = 1 is the online setting; G = 90 puts every frame in one group.`,
-      });
-      const modes = h('div', 'an-modes');
-      [['G = 1', 'online video'], ['G = 2', 'stereo pairs'], ['G = N', 'offline set']].forEach(([g, t]) => {
-        const m = h('span', 'an-mode');
-        m.append(h('strong', '', g), h('span', '', t));
-        modes.appendChild(m);
-      });
-      modes.appendChild(h('span', 'an-modes-t', 'one set of weights'));
-      body.appendChild(modes);
+      const body = block(P, { title: 'Bigger groups, lower pose error', src: G.figure, note: 'ScanNetV2 · 90 frames · pose ATE (m)' });
       onReveal('views', lineChart(body, {
         x: G.x, series: G.series, colors: { 'Scale-invariant': C.si, 'Metric scale': C.ms },
         yLo: 0.028, yHi: 0.048, yTicks: [0.03, 0.035, 0.04, 0.045], xLabel: G.xLabel, H: 230,
         ends: [{ index: 0, label: 'online' }, { index: G.x.length - 1, label: 'offline' }],
       }));
+
+      const U = A.unified;
+      const [sp, un] = U.rows;
+      const ub = block(P, { title: 'One model against three specialists', src: U.table, note: '7-Scenes, NRGBD, DTU · (Acc. + Comp.) / 2, lower is better' });
+      barRows(ub, {
+        max: 0.2,
+        ticks: [0, 0.05, 0.1, 0.15, 0.2],
+        keys: [{ label: 'Specialized model', color: C.base }, { label: 'Unified UniT', color: C.ms }],
+        unit: (v) => f3(v),
+        rows: U.columns.map((c, j) => {
+          const d = pct(sp.values[j], un.values[j]);
+          return {
+            label: `${c[0]} · ${c[1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
+            bars: [sp.values[j], un.values[j]],
+            tag: d === 0 ? '±0%' : `${d > 0 ? '+' : '−'}${Math.abs(d)}%`,
+          };
+        }),
+      });
     }
   }
 
-  // 02 Any modality: Table 7 as an UpSet-style matrix, then Table 9.
+  // Plug-in, auxiliary modalities: Table 8 as an UpSet-style matrix, then depth
+  // completion (Table 9).
   {
     const P = ev('modality');
     if (P && R) {
@@ -296,11 +355,7 @@
         const best = Math.min(...Object.values(ranks));
         return { label: c.label, has, ranks, win: ranks.UniT === best };
       });
-      const body = block(P, {
-        title: 'Every input combination, ranked',
-        src: MM.table,
-        note: `Average rank over the nine metrics of ${MM.table} (Acc., Comp. and N.C. on 7-Scenes, ETH3D and ScanNetV2), metric scale, among the three methods that accept these inputs. Rank 1 is best; shaded columns are those UniT leads.`,
-      });
+      const body = block(P, { title: 'Every input combination', src: MM.table, note: 'Average rank over nine metrics, metric scale. Shaded columns: UniT leads.' });
       body.appendChild(legend(methods.map((m) => [m, MC[m] || '#999', 'dot'])));
       const up = h('div', 'an-up');
       up.style.setProperty('--n', combos.length);
@@ -395,57 +450,26 @@
       up.appendChild(tip);
       body.appendChild(up);
 
-      // Table 9: which fusion design.
-      const Md = A.modal;
-      const first = Md.rows[0].avg;
-      const last = Md.rows[Md.rows.length - 1].avg;
-      const fb = block(P, {
-        title: 'Why modal attention',
-        src: Md.table,
-        note: `${Md.table}. Average of (Acc. + Comp.) / 2 over image-only and multi-modal inputs and both scale settings, on 7-Scenes, NRGBD and DTU. Modal attention lowers it ${-pct(first, last)}% against linear projection, for about 3% more parameters.`,
+      // Table 9: UniT's place for each sparse-depth pattern.
+      const DC = R.depthCompletion;
+      const db = block(P, { title: 'Sparse depth in, dense depth out', src: DC.table, note: 'Sintel, KITTI, NYUv2 · average rank among three methods, 1 is best' });
+      const quad = h('div', 'dc');
+      DC.conditions.forEach((c, i) => {
+        const rows = [...c.groups[0].rows].sort((p, q) => p.rank - q.rank);
+        const place = 1 + rows.findIndex((r) => r.method === 'UniT');
+        const unit = rows.find((r) => r.method === 'UniT');
+        const [name, what] = DC_PATTERNS[c.label] || [c.label, ''];
+        const cell = h('div', `dc-c${place === 1 ? ' is-first' : ''}`);
+        cell.style.setProperty('--k', i);
+        cell.title = rows.map((r) => `${r.method} ${r.rank.toFixed(2)}`).join(' · ');
+        const txt = h('p', 'dc-t');
+        txt.append(h('strong', '', name), h('span', '', what));
+        const res = h('p', 'dc-r');
+        res.append(h('strong', '', ord(place)), h('span', '', `avg. rank ${unit.rank.toFixed(2)}`));
+        cell.append(sparseIcon(c.label), txt, res);
+        quad.appendChild(cell);
       });
-      const fz = h('div', 'an-fz');
-      const head = h('div', 'an-fz-row an-fz-head');
-      head.append(h('span', 'an-fz-l', ''));
-      Md.partNames.forEach((p) => head.appendChild(h('span', 'an-fz-p', p)));
-      const lo = 0.064;
-      const hi = 0.076;
-      const ax = h('span', 'an-fz-axis');
-      [0.064, 0.068, 0.072, 0.076].forEach((t) => {
-        const tk = h('span', 'an-fz-tick', t.toFixed(3));
-        tk.style.setProperty('--x', (t - lo) / (hi - lo));
-        ax.appendChild(tk);
-      });
-      head.append(ax, h('span', 'an-fz-v', 'avg.'));
-      fz.appendChild(head);
-      Md.rows.forEach((r, i) => {
-        const row = h('div', `an-fz-row${r.ours ? ' is-ours' : ''}`);
-        row.style.setProperty('--i', i);
-        const l = h('span', 'an-fz-l', r.label);
-        l.title = r.label;
-        row.appendChild(l);
-        r.parts.forEach((on, j) => {
-          const c = h('span', `an-fz-c${on ? ' is-on' : ''}`);
-          c.title = `${Md.partNames[j]}: ${on ? 'yes' : 'no'}`;
-          row.appendChild(c);
-        });
-        const tr = h('span', 'an-fz-track');
-        [0.064, 0.068, 0.072, 0.076].forEach((t) => {
-          const g = h('span', 'an-bgl');
-          g.style.setProperty('--x', (t - lo) / (hi - lo));
-          tr.appendChild(g);
-        });
-        const stem = h('span', 'an-fz-stem');
-        stem.style.setProperty('--a', (Math.min(r.avg, first) - lo) / (hi - lo));
-        stem.style.setProperty('--b', (Math.max(r.avg, first) - lo) / (hi - lo));
-        const dot = h('span', 'an-fz-dot');
-        dot.style.setProperty('--x', (r.avg - lo) / (hi - lo));
-        dot.style.setProperty('--x0', (first - lo) / (hi - lo));
-        tr.append(stem, dot);
-        row.append(tr, h('span', 'an-fz-v', f3(r.avg)));
-        fz.appendChild(row);
-      });
-      fb.appendChild(fz);
+      db.appendChild(quad);
     }
   }
 
@@ -462,11 +486,26 @@
         const next = [...others].sort((a, b) => a.rank - b.rank)[0];
         return { n: better + 1, tie, of: rows.length, u: u.rank, next };
       };
-      const body = block(P, {
-        title: 'UniT’s place among all methods',
-        src: 'Tables 3–6',
-        note: 'Place by the paper’s average rank over each table’s nine metrics, among the methods evaluated in that setting (fewer methods predict metric scale, so those columns have two to four). Monocular depth has a single setting.',
+      // Table 11: loss.
+      const L = A.loss;
+      const a = L.rows[0].values;
+      const c = L.rows[2].values;
+      const order = [3, 1, 0, 2];
+      const lb = block(P, { title: 'Against direct metric regression', src: L.table, note: '7-Scenes, NRGBD, DTU · (Acc. + Comp.) / 2, lower is better' });
+      barRows(lb, {
+        max: 0.45,
+        ticks: [0, 0.1, 0.2, 0.3, 0.4],
+        keys: [{ label: 'Direct metric regression', color: C.base }, { label: 'UniT loss', color: C.ms }],
+        unit: (v) => f3(v),
+        rows: order.map((j) => ({
+          label: `${L.columns[j][0]} · ${L.columns[j][1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
+          bars: [a[j], c[j]],
+          ours: j % 2 === 1,
+          tag: `${pct(a[j], c[j]) > 0 ? '+' : '−'}${Math.abs(pct(a[j], c[j]))}%`,
+          tagCls: pct(a[j], c[j]) <= -30 ? 'is-big' : '',
+        })),
       });
+      const body = block(P, { title: 'UniT’s place in every setting', src: 'Tables 3–6', note: 'Place by the paper’s average rank over nine metrics.' });
       const rm = h('div', 'an-rm');
       const hd1 = h('div', 'an-rm-row an-rm-h1');
       hd1.append(h('span', ''), h('span', 'an-rm-g is-metric', 'Metric scale'), h('span', 'an-rm-g', 'Scale-invariant'));
@@ -499,67 +538,121 @@
       foot.append(h('span', 'an-rm-task', 'First place'), h('span', 'an-rm-tally is-metric', `${tally.metric[0]} of ${tally.metric[1]}`), h('span', 'an-rm-tally', `${tally.si[0]} of ${tally.si[1]}`));
       rm.appendChild(foot);
       body.appendChild(rm);
-
-      // Table 10: loss.
-      const L = A.loss;
-      const a = L.rows[0].values;
-      const c = L.rows[2].values;
-      const order = [3, 1, 0, 2];
-      const lb = block(P, {
-        title: 'Where it comes from: the loss',
-        src: L.table,
-        note: `${L.table}. ${L.note} The scale-adaptive design alone already brings metric-scale error to ${f3(L.rows[1].values[3])} online and ${f3(L.rows[1].values[1])} offline; the shuffled normal loss adds a global regulariser on top.`,
-      });
-      barRows(lb, {
-        max: 0.45,
-        ticks: [0, 0.1, 0.2, 0.3, 0.4],
-        keys: [{ label: 'Direct metric regression', color: C.base }, { label: 'UniT loss', color: C.ms }],
-        unit: (v) => f3(v),
-        rows: order.map((j) => ({
-          label: `${L.columns[j][0]} · ${L.columns[j][1].replace('Scale-invariant', 'scale-inv.').replace('Metric scale', 'metric')}`,
-          bars: [a[j], c[j]],
-          ours: j % 2 === 1,
-          tag: `${pct(a[j], c[j]) > 0 ? '+' : '−'}${Math.abs(pct(a[j], c[j]))}%`,
-          tagCls: pct(a[j], c[j]) <= -30 ? 'is-big' : '',
-        })),
-      });
     }
   }
 
-  // 04 Long horizon: queue capacity (Fig. 10, top) and drop strategy (Table 11).
+  // 02 Streaming memory: KITTI-Odometry (Table 7) and sequence length on NRGBD
+  // (Fig. 11).
   {
     const P = ev('horizon');
     if (P) {
-      const Qd = A.queue;
-      const i30 = Qd.x.indexOf(30);
-      const body = block(P, {
-        title: 'How much memory the queue needs',
-        src: Qd.figure,
-        note: `${Qd.note} The paper uses Q = N/3 as its default.`,
-      });
-      onReveal('horizon', lineChart(body, {
-        x: Qd.x, series: Qd.series, colors: { 'Scale-invariant': C.si, 'Metric scale': C.ms },
-        yLo: 0, yHi: 0.35, yTicks: [0, 0.1, 0.2, 0.3], xLabel: Qd.xLabel, H: 210,
-        mark: { index: i30, label: 'Q = N/3' }, band: { from: i30, label: 'flat from here' },
+      const K = R && R.kitti;
+      if (K) {
+        const row = (m) => K.rows.find((r) => r.method === m);
+        const pairs = [
+          ['vs. TTT3R', row('TTT3R'), row('UniT')],
+          ['vs. VGGT-Long', row('VGGT-Long'), row('UniT-Long')],
+        ];
+        const kb = block(P, { title: 'Kilometre-scale driving', src: K.table, note: `KITTI-Odometry · mean ATE (m) over ${K.sequences.length} sequences, lower is better` });
+        barRows(kb, {
+          max: 200,
+          ticks: [0, 50, 100, 150, 200],
+          keys: [{ label: 'Baseline', color: C.base }, { label: 'UniT', color: C.ms }],
+          unit: (v) => v.toFixed(1),
+          rows: pairs.map(([label, b, u]) => ({ label, bars: [b.avg, u.avg], tag: `−${Math.abs(pct(b.avg, u.avg))}%`, tagCls: 'is-big' })),
+        });
+        // Every sequence at a glance: filled where UniT has the lower error.
+        const ks = h('div', 'ks');
+        const kh = h('div', 'ks-row ks-head');
+        kh.appendChild(h('span', 'ks-l', 'Sequence, vs.'));
+        K.sequences.forEach((q) => kh.appendChild(h('span', 'ks-id', q.id)));
+        kh.appendChild(h('span', 'ks-n', 'UniT wins'));
+        ks.appendChild(kh);
+        pairs.forEach(([label, b, u]) => {
+          const r = h('div', 'ks-row');
+          r.appendChild(h('span', 'ks-l', b.method));
+          let wins = 0;
+          K.sequences.forEach((q, i) => {
+            const win = u.values[i] < b.values[i];
+            wins += win ? 1 : 0;
+            const c = h('span', `ks-c${win ? ' is-win' : ''}`);
+            c.style.setProperty('--k', i);
+            c.title = `Sequence ${q.id}, ${q.frames.toLocaleString('en-US')} frames, ${q.km} km: UniT ${u.values[i].toFixed(1)} m, ${b.method} ${b.values[i].toFixed(1)} m`;
+            c.setAttribute('role', 'img');
+            c.setAttribute('aria-label', c.title);
+            r.appendChild(c);
+          });
+          r.appendChild(h('span', 'ks-n', `${wins} / ${K.sequences.length}`));
+          ks.appendChild(r);
+        });
+        kb.appendChild(ks);
+      }
+      const LH = window.UNIT_LONGHORIZON;
+      if (LH) {
+        const ser = LH.metrics[0].series;
+        const lb = block(P, { title: 'Stable out to 500 frames', src: 'Fig. 11', note: 'NRGBD · metric scale · pose ATE (m)' });
+        onReveal('horizon', lineChart(lb, {
+          x: LH.views,
+          series: { UniT: ser.UniT, CUT3R: ser.CUT3R, DepthAnything3: ser.DepthAnything3 },
+          colors: { UniT: MC.UniT, CUT3R: MC.CUT3R, DepthAnything3: MC.DepthAnything3 },
+          yLo: 0, yHi: 0.8, yTicks: [0, 0.2, 0.4, 0.6, 0.8], xLabel: 'sequence length (frames)', H: 210,
+        }));
+      }
+    }
+  }
+
+  // Motivation exhibits of chapters 02 and 03, redrawn from the paper's Fig. 6c
+  // and Fig. 8 (curves traced from the figures).
+  {
+    const at = document.querySelector('[data-attn]');
+    const Fa = A.attention;
+    if (at && Fa) {
+      onReveal('horizon', lineChart(at, {
+        x: Fa.x, series: Fa.series, colors: { StreamVGGT: '#9a948f', UniT: MC.UniT },
+        yLo: 0, yHi: 20, yTicks: [0, 5, 10, 15, 20], xLabel: 'query frame', H: 190,
+        fmt: (v) => `${v.toFixed(1)}%`, tick: (t) => `${t}%`, dots: false,
       }));
-      const D = A.drop;
-      const db = block(P, {
-        title: 'What to forget when the queue is full',
-        src: D.table,
-        note: `${D.table}. ${D.note} Bars show the error each strategy adds over a full cache (${f3(D.full[0])} and ${f3(D.full[1])}).`,
+    }
+    const lc = document.querySelector('[data-losscurve]');
+    const Fl = A.lossCurve;
+    if (lc && Fl) {
+      onReveal('metric', lineChart(lc, {
+        x: Fl.x, series: Fl.series, colors: { 'Scale-invariant': C.si, 'Metric scale': C.ms },
+        yLo: 0, yHi: 1, yTicks: [0, 0.25, 0.5, 0.75, 1], xLabel: 'training step', H: 200,
+        fmt: (v) => v.toFixed(2), tick: (t) => String(t), xTick: (v) => (v ? `${v / 1000}k` : '0'), dots: false,
+      }));
+    }
+  }
+
+  // Fig. 2 as a matrix: which capabilities each formulation covers.
+  {
+    const host = document.querySelector('[data-paradigms]');
+    const Pd = A.paradigms;
+    if (host && Pd) {
+      const t = h('table', 'pm');
+      const hr = h('tr');
+      hr.appendChild(h('th', 'pm-m', ''));
+      Pd.capabilities.forEach((c) => hr.appendChild(h('th', '', c)));
+      const thead = h('thead');
+      thead.appendChild(hr);
+      const tb = h('tbody');
+      Pd.rows.forEach((r) => {
+        const tr = h('tr', r.ours ? 'is-ours' : '');
+        const th = h('th', 'pm-m');
+        th.scope = 'row';
+        th.append(h('strong', '', r.name), h('span', '', r.how));
+        tr.appendChild(th);
+        r.has.forEach((on, j) => {
+          const td = h('td', on ? 'is-on' : '');
+          const mk = h('span', 'pm-mark', on ? '✓' : '×');
+          mk.setAttribute('aria-label', `${Pd.capabilities[j]}: ${on ? 'yes' : 'no'}`);
+          td.appendChild(mk);
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
       });
-      barRows(db, {
-        max: 0.012,
-        ticks: [0, 0.004, 0.008, 0.012],
-        keys: [{ label: 'Scale-invariant', color: C.si }, { label: 'Metric scale', color: C.ms }],
-        unit: (v) => signed(v),
-        rows: D.rows.map((r) => ({ label: r.label, bars: r.values.map((v, j) => Number((v - D.full[j]).toFixed(3))), ours: r.ours })),
-      });
-      const more = h('p', 'an-more');
-      const btn = h('a', '', 'Sequences of up to 500 frames: Results, Long horizon');
-      btn.href = '#rx-long';
-      more.appendChild(btn);
-      P.appendChild(more);
+      t.append(thead, tb);
+      host.appendChild(t);
     }
   }
 
@@ -572,7 +665,7 @@
       const real = rows.filter((r) => r.real).length;
       const dyn = rows.filter((r) => r.dynamic).length;
       const sum = host.querySelector('.td-sum');
-      if (sum) sum.textContent = `${rows.length} public datasets with metric-scale ground truth, ${scenes.toLocaleString('en-US')} scenes: ${real} real and ${rows.length - real} synthetic, ${dyn} with moving content (${A.data.table}). Bar widths are sampling ratios.`;
+      if (sum) sum.textContent = `${rows.length} datasets · ${scenes.toLocaleString('en-US')} scenes · ${real} real, ${rows.length - real} synthetic · ${dyn} dynamic. Width is the sampling ratio.`;
       const types = Object.keys(TYPE_COLORS);
       const heads = h('ul', 'an-legend td-types');
       const bar = h('div', 'td-mix');

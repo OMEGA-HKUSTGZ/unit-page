@@ -1,9 +1,9 @@
-// Method figure: group autoregression, read through its attention mask.
+// Method figure: group causal attention, read through its attention mask.
 //
 // Four 7-Scenes frames from the paper's architecture figure label both axes of
 // the global-attention mask (rows are query frames, columns key frames), as in
 // the paper's mask figure. The reader picks the group size G; the figure then
-// steps through the autoregressive steps once: the mask fills one group of rows
+// steps through the prediction steps once: the mask fills one group of rows
 // per step, earlier frames are read through a KV-cache queue of capacity Q, and
 // each step decodes its group's point maps. Nothing loops and nothing resizes.
 (() => {
@@ -17,13 +17,13 @@
 
   const MODES = [
     { G: 1, label: 'G = 1', name: 'Online', title: 'Online streaming', mask: 'standard causal mask',
-      text: 'One frame per step. Each frame attends to itself and to the frames still in the KV cache.' },
+      text: 'One frame per step, attending to itself and the cached frames.' },
     { G: 2, label: 'G = 2', name: 'Stereo', title: 'Synchronized pairs', mask: 'group causal mask',
-      text: 'Two views per step, bidirectional within the pair and causal across pairs, as for a stereo rig.' },
+      text: 'Two views per step: bidirectional within the pair, causal across pairs.' },
     { G: 3, label: 'G = 3', name: 'Triple', title: 'Synchronized triples', mask: 'group causal mask',
-      text: 'Three views per step, bidirectional within the group and causal across groups. With N = 4, the last group here holds the one remaining frame.' },
+      text: 'Three views per step. With N = 4, the last group holds the one remaining frame.' },
     { G: N, label: 'G = N', name: 'Offline', title: 'Offline reconstruction', mask: 'null mask',
-      text: 'All frames in a single step with full attention, like a multi-view model. Nothing needs caching.' },
+      text: 'All frames in one step with full attention. Nothing is cached.' },
   ];
 
   const h = (tag, cls, txt) => {
@@ -144,7 +144,7 @@
   const replay = h('button', 'gx-btn gx-replay', '↻ Replay');
   replay.type = 'button';
   stepRow.append(prev, stepNum, next, dots, replay);
-  stepBox.append(h('span', 'gx-label', 'Autoregressive step'), stepRow);
+  stepBox.append(h('span', 'gx-label', 'Prediction step'), stepRow);
 
   const cacheBox = h('div', 'gx-block');
   const cacheHead = h('div', 'gx-blockhead');

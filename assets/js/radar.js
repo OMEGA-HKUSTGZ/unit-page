@@ -1,6 +1,6 @@
 // Benchmark radar: one spoke per benchmark of Tables 3–6, the same twelve
 // spokes as the radar in the paper's Fig. 1. Numbers come from
-// assets/js/results-data.js (generated from the paper's LaTeX tables).
+// assets/js/results-data.js (generated from the paper's tables).
 //
 // Score on a spoke = mean over that table's three metrics of the model's value
 // relative to the best model shown (best ÷ value when lower is better,
@@ -22,7 +22,7 @@
   const SPOKES = [];
   TASKS.forEach(([task], ti) => DATA[task].datasets.forEach((ds, di) => SPOKES.push({ task, ti, di, ds })));
   const N = SPOKES.length;
-  const ONLINE_ONLY = ['CUT3R', 'StreamVGGT'];
+  const ONLINE_ONLY = ['CUT3R', 'StreamVGGT', 'TTT3R', 'Stream3R'];
   // Shared with the per-task boards (assets/js/results.js loads first).
   const COLORS = window.UNIT_COLORS;
   const SCALES = ['Metric-scale', 'Scale-invariant'];
@@ -103,7 +103,7 @@
   const side = h('div', 'rd-side');
   card.append(head, controls, stage, side);
   const caption = h('figcaption', 'rd-caption',
-    'Spokes are the twelve benchmarks of Tables 3–6, the same spokes as the radar in the paper’s Fig. 1. A model’s score on a spoke is the mean over that table’s three metrics of its value relative to the best model shown (best ÷ value when lower is better), so 1.0 on the outer ring means best on every metric.');
+    'Twelve benchmarks from Tables 3–6. Score = mean of best ÷ value over a table’s three metrics; 1.0 is best on every metric.');
   host.append(card, caption);
 
   // ---------- radar drawing ----------
@@ -225,7 +225,7 @@
       w.addEventListener('focus', () => setHover(i));
       w.addEventListener('blur', () => setHover(-1));
       w.addEventListener('click', () => { ui.pinned = i; setHover(-1); paintSpoke(); });
-      w.addEventListener('keydown', (e) => { if (e.key === 'Enter') openTable(i); });
+      w.addEventListener('keydown', (e) => { if (e.key === 'Enter') { ui.pinned = i; setHover(-1); paintSpoke(); } });
     });
     svg.addEventListener('mouseleave', () => setHover(-1));
     paint();
@@ -487,21 +487,12 @@
 
     const foot = h('div', 'rd-dfoot');
     foot.appendChild(h('span', 'rd-hint', touch ? 'Tap a spoke for its numbers.' : 'Point at a spoke for its numbers.'));
-    const open = h('button', 'rd-open', `${spec.table} from the paper ↗`);
-    open.type = 'button';
-    open.addEventListener('click', () => openTable(i));
-    foot.appendChild(open);
     detail.appendChild(foot);
   }
   function setHover(i) {
     if (ui.hover === i) return;
     ui.hover = i;
     paintSpoke();
-  }
-
-  // The per-task boards are gone; open the paper's table in the image viewer.
-  function openTable(i) {
-    document.querySelector(`[data-table-img="${SPOKES[i].task}"]`)?.click();
   }
 
   // Lock the side column to the tallest of the four views, so neither a

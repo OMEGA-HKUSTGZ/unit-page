@@ -68,7 +68,7 @@ document.querySelectorAll('[data-copy]').forEach((button) => {
 // ========================================
 function initImageLightbox() {
     const images = Array.from(document.querySelectorAll(
-        '#overview .media-frame img, #results .media-frame img'
+        '#overview .media-frame img, #results .media-frame img, #analysis .ins-fig img'
     ));
     if (!images.length) return;
 
