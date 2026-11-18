@@ -2,7 +2,7 @@
 // Each chapter's motivation exhibit is in index.html (the paradigm matrix of
 // Fig. 2 and the curves of Figs. 6 and 8 are drawn here); this script fills the evidence panel beside it, and
 // the training-data strip in the Method section. Reads
-// assets/js/analysis-data.js (Tables 1, 11, 13, Figs. 2 and 12),
+// assets/js/analysis-data.js (Tables 1, 11, 13, Figs. 2 and 12, bottom),
 // assets/js/results-data.js (Tables 3-9) and assets/js/longhorizon-data.js
 // (Fig. 11).
 // Every block has a fixed size; values enter once, when a chapter first
@@ -541,8 +541,8 @@
     }
   }
 
-  // 02 Streaming memory: KITTI-Odometry (Table 7), sequence length on NRGBD
-  // (Fig. 11) and queue capacity (Fig. 12, top).
+  // 02 Streaming memory: KITTI-Odometry (Table 7) and sequence length on NRGBD
+  // (Fig. 11).
   {
     const P = ev('horizon');
     if (P) {
@@ -598,13 +598,6 @@
           yLo: 0, yHi: 0.8, yTicks: [0, 0.2, 0.4, 0.6, 0.8], xLabel: 'sequence length (frames)', H: 210,
         }));
       }
-      const Qd = A.queue;
-      const body = block(P, { title: 'A third of the frames is enough memory', src: Qd.figure, note: 'ScanNetV2 · 90 frames · pose ATE (m)' });
-      onReveal('horizon', lineChart(body, {
-        x: Qd.x, series: Qd.series, colors: { 'Scale-invariant': C.si, 'Metric scale': C.ms },
-        yLo: 0, yHi: 0.35, yTicks: [0, 0.1, 0.2, 0.3], xLabel: Qd.xLabel, H: 210,
-        mark: { index: Qd.x.indexOf(30), label: 'Q = N/3' },
-      }));
     }
   }
 

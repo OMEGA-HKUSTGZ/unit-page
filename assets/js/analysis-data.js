@@ -1,7 +1,7 @@
 // Data for the Key insights section and the training-data strip, from the IJCV
 // 2026 version of the paper. Tables 1, 11 and 13 are copied from the paper's tables,
 // and the capability matrix from the check marks of Fig. 2.
-// Fig. 12 is only given as a plot, so its curves were read from the marker
+// Fig. 12 is only given as a plot, so its group-size curve (bottom) was read from the marker
 // centres of the full-resolution figure (unchanged from Fig. 10 of the arXiv
 // version), calibrated on its gridlines; they are accurate to about ±0.001 m.
 // Figs. 6c and 8 are also only plots: their curves were traced from the figures
@@ -38,16 +38,6 @@ window.UNIT_ANALYSIS = {
     series: {
       'Scale-invariant': [1.0, 0.5, 0.22, 0.12, 0.085, 0.085, 0.06, 0.045, 0.04, 0.04, 0.045, 0.04, 0.04, 0.045, 0.045, 0.035, 0.03],
       'Metric scale': [1.0, 0.78, 0.42, 0.25, 0.18, 0.2, 0.12, 0.1, 0.085, 0.075, 0.075, 0.065, 0.06, 0.065, 0.065, 0.055, 0.05],
-    },
-  },
-  queue: {
-    figure: 'Fig. 12, top',
-    note: 'Camera pose ATE (m) on ScanNetV2, 90 frames. Read from the figure, about ±0.001.',
-    x: [1, 10, 20, 30, 40, 50, 60, 70, 80, 90],
-    xLabel: 'queue capacity Q (frames)',
-    series: {
-      'Scale-invariant': [0.295, 0.159, 0.05, 0.036, 0.035, 0.036, 0.035, 0.035, 0.035, 0.034],
-      'Metric scale': [0.341, 0.183, 0.059, 0.047, 0.046, 0.046, 0.046, 0.046, 0.045, 0.045],
     },
   },
   group: {
