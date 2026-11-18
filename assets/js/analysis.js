@@ -162,9 +162,16 @@
         const tl = s('text', { class: 'an-ytick', x: x0 - 8, y: ys(t) + 4 }, svg);
         tl.textContent = tick(t);
       });
+      // Evenly spaced x labels, at least 34px apart; prefer a step that also
+      // lands on the last value, so both ends are labelled.
+      const room = Math.max(2, Math.floor((x1 - x0) / 34) + 1);
+      let step = 1;
+      while ((x.length - 1) / step + 1 > room) step += 1;
+      let even = step;
+      while ((x.length - 1) % even) even += 1;
+      if (even <= step * 2) step = even;
       x.forEach((v, i) => {
-        if ((W < 380 || x.length > 12) && i % 2 === 1 && i !== x.length - 1) return;
-        if (W < 380 && x.length > 12 && i % 4 !== 0) return;
+        if (i % step) return;
         const tl = s('text', { class: 'an-xtick', x: xs(i), y: y0 + 17 }, svg);
         tl.textContent = xTick(v);
       });
