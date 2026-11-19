@@ -26,7 +26,7 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/css/style.css?v=20261118a" />
+    <link rel="stylesheet" href="assets/css/style.css?v=20261119a" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -45,7 +45,11 @@
         </a>
         <div class="header-divider" aria-hidden="true"></div>
         <span class="header-context">HKUST(GZ)</span>
-        <nav class="main-nav" aria-label="OMEGA Lab">
+        <button class="menu-toggle" type="button" aria-controls="main-nav" aria-expanded="false" aria-label="Open navigation">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+        <nav id="main-nav" class="main-nav" aria-label="OMEGA Lab">
           <a href="../../research/">Research</a>
           <a href="../../publications/">Publications</a>
           <a href="../../projects/">Projects</a>
@@ -120,7 +124,10 @@
             preload="metadata"
           ></video>
         </figure>
-        <nav class="chapters" aria-label="On this page">
+      </section>
+
+      <div class="chapters-bar">
+        <nav class="container chapters" aria-label="On this page">
           <a href="#overview">Overview</a>
           <a href="#method">Method</a>
           <a href="#examples">Examples</a>
@@ -129,7 +136,7 @@
           <a href="#results">Results</a>
           <a href="#citation">Citation</a>
         </nav>
-      </section>
+      </div>
 
       <section class="section container" id="overview">
         <div class="section-heading">
@@ -206,8 +213,9 @@
             </p>
           </div>
           <p class="demo-hint">
-            Drag to rotate, scroll or pinch to zoom, and switch scenes with the thumbnails. Turn on
-            <strong>Measure</strong> to check the real-world distance between any two points.
+            <span class="hint-fine">Drag to rotate, scroll or pinch to zoom, and switch scenes with the thumbnails.</span>
+            <span class="hint-touch">Drag to rotate, pinch to zoom, and tap a thumbnail below to switch scenes. <span class="hint-scene-strip">Swipe the strip to see more scenes.</span></span>
+            Turn on <strong>Measure</strong> to check the real-world distance between any two points.
           </p>
           <div class="demo-ply-panel">
             <div id="demo-message">Click a thumbnail to load the point cloud.</div>
@@ -457,6 +465,7 @@
               <figcaption>
                 <span class="ql-t">Scale you can see</span>
                 <span class="ql-n">Raw point clouds at one scene scale, no alignment</span>
+                <span class="ql-swipe" aria-hidden="true">Swipe to compare all five <span>→</span></span>
               </figcaption>
               <div class="ql-f ins-fig">
                 <ol class="ql-h" aria-hidden="true">
@@ -590,14 +599,14 @@
       </div>
     </footer>
 
-    <script src="assets/js/method.js?v=20261118a" defer></script>
-    <script src="assets/js/results-data.js?v=20261118a" defer></script>
-    <script src="assets/js/longhorizon-data.js?v=20261118a" defer></script>
-    <script src="assets/js/results.js?v=20261118a" defer></script>
-    <script src="assets/js/radar.js?v=20261118a" defer></script>
-    <script src="assets/js/analysis-data.js?v=20261118a" defer></script>
-    <script src="assets/js/analysis.js?v=20261118a" defer></script>
-    <script src="assets/js/main.js?v=20261118a" defer></script>
-    <script src="assets/js/viewer.js?v=20261110-rootpath1" defer></script>
+    <script src="assets/js/method.js?v=20261118c" defer></script>
+    <script src="assets/js/results-data.js?v=20261118c" defer></script>
+    <script src="assets/js/longhorizon-data.js?v=20261118c" defer></script>
+    <script src="assets/js/results.js?v=20261118c" defer></script>
+    <script src="assets/js/radar.js?v=20261119a" defer></script>
+    <script src="assets/js/analysis-data.js?v=20261118c" defer></script>
+    <script src="assets/js/analysis.js?v=20261118c" defer></script>
+    <script src="assets/js/main.js?v=20261119a" defer></script>
+    <script src="assets/js/viewer.js?v=20261119a" defer></script>
   </body>
 </html>

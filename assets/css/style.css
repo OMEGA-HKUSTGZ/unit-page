@@ -38,6 +38,7 @@
   --heading: 'Space Grotesk Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --body: 'Inter Variable', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --content: 1240px;
+  --bar-h: 52px; /* the sticky section bar */
 }
 
 * {
@@ -45,7 +46,7 @@
 }
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 24px;
+  scroll-padding-top: calc(var(--bar-h) + 20px);
 }
 body {
   margin: 0;
@@ -150,6 +151,8 @@ h3 {
 
 /* Header — same structure as the lab site */
 .site-header {
+  position: relative;
+  z-index: 50;
   height: 91px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.97);
@@ -425,22 +428,53 @@ h3 {
   color: var(--text);
 }
 
-/* Chapter links under the intro video */
+/* Section bar: under the intro video, then pinned to the top while reading. main.js marks the
+   section in view with aria-current. */
+.chapters-bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin-top: 32px;
+  background: rgba(250, 248, 246, 0.94);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  backdrop-filter: saturate(1.4) blur(12px);
+  border-block: 1px solid var(--line);
+}
 .chapters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
+  gap: 32px;
+  height: var(--bar-h);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chapters::-webkit-scrollbar {
+  display: none;
 }
 .chapters a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
   font: 500 14px var(--body);
-  background: var(--white);
-  border: 1px solid var(--line);
-  padding: 9px 14px;
+  color: var(--text);
+  white-space: nowrap;
+  transition: color 0.18s;
 }
-.chapters a:hover {
-  border-color: var(--brand);
-  color: var(--brand);
+.chapters a::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: var(--brand);
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.chapters a:hover,
+.chapters a[aria-current] {
+  color: var(--ink);
+}
+.chapters a[aria-current]::after {
+  transform: scaleX(1);
 }
 
 /* Examples — interactive point-cloud viewer (ported from the original page) */
@@ -1423,7 +1457,6 @@ body.lightbox-open {
   font: 500 10.5px var(--heading);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.7;
 }
 .gx-body {
   display: grid;
@@ -1890,7 +1923,7 @@ body.lightbox-open {
    Results — radar (assets/js/radar.js)
    ======================================== */
 .radar {
-  margin: 0 0 56px;
+  margin: 0;
 }
 .rd-card {
   position: relative;
@@ -2244,6 +2277,10 @@ body.lightbox-open {
 .rd-table-wrap {
   overflow-x: auto;
 }
+.rd-table-wrap:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
 .rd-table {
   width: 100%;
   table-layout: fixed;
@@ -2435,7 +2472,7 @@ body.lightbox-open {
 }
 .an-claim {
   position: sticky;
-  top: 32px;
+  top: calc(var(--bar-h) + 32px);
   align-self: start;
 }
 .an-idx {
@@ -2694,7 +2731,7 @@ body.lightbox-open {
 @media (min-height: 780px) and (min-width: 901px) {
   .ins-motive {
     position: sticky;
-    top: 24px;
+    top: calc(var(--bar-h) + 24px);
   }
 }
 .ins-motive figcaption {
@@ -3521,6 +3558,27 @@ body.lightbox-open {
 .ql-f {
   padding: clamp(12px, 2vw, 24px);
 }
+.ql-swipe {
+  display: none;
+  font: 600 11px var(--heading);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-deep);
+}
+.ql-swipe span {
+  display: inline-block;
+  margin-left: 4px;
+}
+@media (max-width: 700px) {
+  .ql-swipe {
+    display: block;
+    flex-basis: 100%;
+    margin-top: 6px;
+  }
+  .ql-f {
+    scrollbar-width: thin;
+  }
+}
 .ql-h {
   position: relative;
   height: 28px;
@@ -3564,7 +3622,7 @@ body.lightbox-open {
     gap: 3px;
   }
   .ks-id {
-    font-size: 9px;
+    font-size: 10.5px;
   }
   .dc {
     grid-template-columns: 1fr 1fr;
@@ -3758,3 +3816,333 @@ body.lightbox-open {
   }
 }
 
+
+/* ========================================
+   Lab menu below 760px (same pattern as the lab site's header)
+   ======================================== */
+.menu-toggle {
+  display: none;
+}
+@media (max-width: 760px) {
+  .menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .menu-toggle svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+  }
+  .menu-toggle svg:last-child,
+  .menu-toggle[aria-expanded='true'] svg:first-child {
+    display: none;
+  }
+  .menu-toggle[aria-expanded='true'] svg:last-child {
+    display: block;
+  }
+  .main-nav.is-open {
+    display: flex;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 0;
+    margin: 0;
+    padding: 6px 16px 14px;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 16px 24px rgba(72, 74, 71, 0.08);
+    font-size: 17px;
+  }
+  .main-nav.is-open a {
+    padding: 13px 0;
+  }
+  .main-nav.is-open a + a {
+    border-top: 1px solid #efe9e4;
+  }
+}
+
+/* The viewer hint names the gestures of the device in hand. */
+.hint-touch,
+.hint-scene-strip {
+  display: none;
+}
+@media (pointer: coarse) {
+  .hint-fine {
+    display: none;
+  }
+  .hint-touch {
+    display: inline;
+  }
+}
+
+/* ========================================
+   Phones: a layout of its own, not the desktop one stacked
+   ======================================== */
+button,
+.button,
+.chapters a,
+.demo-thumb {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 680px) {
+  .hint-scene-strip {
+    display: inline;
+  }
+  :root {
+    --bar-h: 48px;
+  }
+  h2 {
+    font-size: 30px;
+    letter-spacing: -0.04em;
+  }
+  .eyebrow {
+    margin-bottom: 14px;
+  }
+  .section {
+    padding-block: 56px;
+  }
+  .section-heading {
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .section-heading > p {
+    font-size: 16px;
+  }
+
+  /* Hero: tighter credits, the four links as an even 2 × 2 grid */
+  .hero {
+    padding-block: 36px 28px;
+  }
+  .subtitle {
+    font-size: 21px;
+    margin: 12px 0 22px;
+  }
+  .authors {
+    gap: 2px 16px;
+    margin-bottom: 10px;
+    font-size: 15.5px;
+  }
+  .affiliations {
+    margin-bottom: 24px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .actions .button {
+    justify-content: center;
+    gap: 10px;
+  }
+  .tldr {
+    margin-top: 24px;
+    font-size: 15.5px;
+  }
+
+  /* Section bar: full-bleed, swipes sideways, fades at the edges */
+  .chapters-bar {
+    margin-top: 20px;
+  }
+  .chapters.container {
+    width: 100%;
+    gap: 24px;
+    padding-inline: 16px 32px;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 32px), transparent);
+  }
+
+  /* Overview: a 2 × 2 grid instead of four full-width rows */
+  .capabilities {
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 0;
+  }
+  .capabilities li,
+  .capabilities li + li {
+    padding: 18px 14px 16px 0;
+    border: 0;
+  }
+  .capabilities li:nth-child(even) {
+    padding: 18px 0 16px 14px;
+    border-left: 1px solid var(--line);
+  }
+  .capabilities li:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+  .capabilities .cap-index {
+    margin-bottom: 8px;
+  }
+  .capabilities h3 {
+    font-size: 17px;
+    margin-bottom: 6px;
+  }
+  .capabilities p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Training data: datasets as an aligned two-column list */
+  .td {
+    margin-top: 36px;
+    padding-top: 24px;
+  }
+  .td-head {
+    gap: 8px;
+  }
+  .td-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+  .td-chip {
+    min-width: 0;
+    padding: 0 8px;
+    border-radius: 4px;
+  }
+  .td-chip > span:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .td-chip-v {
+    margin-left: auto;
+  }
+
+  /* Examples: scenes as a swipeable strip under the viewer */
+  .demo-hint {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .demo-thumbs {
+    display: flex;
+    gap: 8px;
+    margin: 10px -16px 0;
+    padding: 0 16px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 16px;
+    scrollbar-width: none;
+  }
+  .demo-thumbs::-webkit-scrollbar {
+    display: none;
+  }
+  .demo-thumb {
+    flex: 0 0 42%;
+    scroll-snap-align: start;
+  }
+  .demo-thumb span {
+    padding: 7px 9px;
+    font-size: 12.5px;
+    letter-spacing: 0;
+  }
+
+  /* Live demo: one strip of examples, full-width actions */
+  .demo-inner {
+    padding-block: 48px 24px;
+  }
+  .demo-inner p:last-child {
+    font-size: 16px;
+  }
+  .demo-card {
+    gap: 20px;
+    padding: 16px;
+  }
+  .demo-card-media {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .demo-card-media img {
+    aspect-ratio: 1;
+  }
+  .demo-steps {
+    gap: 14px;
+    margin-bottom: 22px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .demo-card-actions {
+    display: grid;
+    gap: 8px;
+  }
+  .demo-card-actions .button {
+    justify-content: center;
+  }
+  .demo-card-note {
+    font-size: 13px;
+  }
+  .hf-space {
+    margin-bottom: 56px;
+  }
+
+  /* Key insights: one level of padding, not three */
+  .an-ch {
+    padding-block: 48px;
+  }
+  .ins-head h3 {
+    font-size: 26px;
+  }
+  .ins-flow > li,
+  .ins-flow > li:first-child {
+    padding: 16px 0;
+  }
+  .ins-flow > li.is-result {
+    padding: 16px;
+  }
+  .ins-flow {
+    margin-bottom: 24px;
+  }
+  .ins-body {
+    gap: 16px;
+  }
+  .ins-motive,
+  .an-b {
+    padding: 16px;
+  }
+  .ins-chart {
+    padding: 10px 8px 4px;
+  }
+
+  /* Citation: wrap instead of scrolling sideways, Copy above the text */
+  .bibtex pre {
+    padding: 50px 16px 18px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .copy {
+    top: 10px;
+    right: 10px;
+  }
+  .footer-inner {
+    gap: 18px;
+    padding-block: 32px;
+  }
+}
+/* Below 360px the longest dataset names no longer fit two to a row. */
+@media (max-width: 359px) {
+  .td-chips {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rd-table {
+    min-width: 320px;
+  }
+}
