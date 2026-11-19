@@ -1256,8 +1256,8 @@ class PointCloudViewer {
     // which matches how setRotation() from the sliders drives the scene
     // so the two controls stay in exact lockstep.
     _installRotateDrag() {
-        let dragging = false;
-        let pid = null;
+        const touches = new Map();
+        let rotateId = null;
         let lastX = 0, lastY = 0;
         let startX = 0, startY = 0;
         let moved = false;
@@ -1267,20 +1267,26 @@ class PointCloudViewer {
         const r2d = 180 / Math.PI;
         const wrap = (deg) => Math.round(((deg + 180) % 360 + 360) % 360 - 180);
 
-        this.canvas.addEventListener('pointerdown', (e) => {
-            if (e.button !== 0) return;          // left / primary only
-            if (!this.pointCloud) return;
-            dragging = true;
-            pid = e.pointerId;
+        const startRotation = (e) => {
+            rotateId = e.pointerId;
             startX = lastX = e.clientX;
             startY = lastY = e.clientY;
             moved = false;
+        };
+
+        this.canvas.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0 || !this.pointCloud) return;
+            if (e.pointerType === 'touch') touches.set(e.pointerId, e);
+            // OrbitControls handles two-finger zoom and pan.
+            if (touches.size > 1) rotateId = null;
+            else startRotation(e);
             this._beginInteractionBudget();
-            try { this.canvas.setPointerCapture(pid); } catch {}
+            try { this.canvas.setPointerCapture(e.pointerId); } catch {}
         });
 
         this.canvas.addEventListener('pointermove', (e) => {
-            if (!dragging || e.pointerId !== pid || !this.pointCloud) return;
+            if (touches.has(e.pointerId)) touches.set(e.pointerId, e);
+            if (e.pointerId !== rotateId || !this.pointCloud) return;
             if (!moved) {
                 if (Math.hypot(e.clientX - startX, e.clientY - startY) < THRESH) return;
                 moved = true;
@@ -1323,14 +1329,19 @@ class PointCloudViewer {
         });
 
         const end = (e) => {
-            if (!dragging || e.pointerId !== pid) return;
-            dragging = false;
-            this._endInteractionBudgetSoon();
-            try { this.canvas.releasePointerCapture(pid); } catch {}
-            pid = null;
+            if (!touches.delete(e.pointerId) && e.pointerId !== rotateId) return;
+            rotateId = null;
+            if (touches.size === 1) {
+                // Resume at the remaining finger's latest position, without a jump.
+                startRotation(touches.values().next().value);
+            } else if (touches.size === 0) {
+                this._endInteractionBudgetSoon();
+            }
+            try { this.canvas.releasePointerCapture(e.pointerId); } catch {}
         };
         this.canvas.addEventListener('pointerup', end);
         this.canvas.addEventListener('pointercancel', end);
+        this.canvas.addEventListener('lostpointercapture', end);
     }
 
     initMeasureUI() {

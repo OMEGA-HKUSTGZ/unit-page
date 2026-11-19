@@ -484,6 +484,11 @@
     const wrap = h('div', 'rd-table-wrap');
     wrap.appendChild(table);
     detail.appendChild(wrap);
+    if (wrap.scrollWidth > wrap.clientWidth + 1) {
+      wrap.tabIndex = 0;
+      wrap.setAttribute('role', 'region');
+      wrap.setAttribute('aria-label', `${sp.ds} ${TASKS[sp.ti][1]} results`);
+    }
 
     const foot = h('div', 'rd-dfoot');
     foot.appendChild(h('span', 'rd-hint', touch ? 'Tap a spoke for its numbers.' : 'Point at a spoke for its numbers.'));

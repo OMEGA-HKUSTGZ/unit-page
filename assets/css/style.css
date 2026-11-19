@@ -1457,7 +1457,6 @@ body.lightbox-open {
   font: 500 10.5px var(--heading);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.7;
 }
 .gx-body {
   display: grid;
@@ -2277,6 +2276,10 @@ body.lightbox-open {
 }
 .rd-table-wrap {
   overflow-x: auto;
+}
+.rd-table-wrap:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
 }
 .rd-table {
   width: 100%;
@@ -3874,7 +3877,8 @@ body.lightbox-open {
 }
 
 /* The viewer hint names the gestures of the device in hand. */
-.hint-touch {
+.hint-touch,
+.hint-scene-strip {
   display: none;
 }
 @media (pointer: coarse) {
@@ -3897,6 +3901,9 @@ button,
   -webkit-tap-highlight-color: transparent;
 }
 @media (max-width: 680px) {
+  .hint-scene-strip {
+    display: inline;
+  }
   :root {
     --bar-h: 48px;
   }
@@ -3957,7 +3964,7 @@ button,
   .chapters.container {
     width: 100%;
     gap: 24px;
-    padding-inline: 16px;
+    padding-inline: 16px 32px;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 32px), transparent);
     mask-image: linear-gradient(90deg, transparent, #000 16px, #000 calc(100% - 32px), transparent);
   }
@@ -4134,5 +4141,8 @@ button,
 @media (max-width: 359px) {
   .td-chips {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .rd-table {
+    min-width: 320px;
   }
 }

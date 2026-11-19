@@ -62,10 +62,13 @@ document.querySelectorAll('[data-tabs]').forEach((root) => {
       toggle.focus();
     }
   });
-  document.addEventListener('click', (e) => {
+  const closeOutside = (e) => {
     if (!nav.classList.contains('is-open')) return;
     if (!nav.contains(e.target) && !toggle.contains(e.target)) set(false);
-  });
+  };
+  document.addEventListener('click', closeOutside);
+  document.addEventListener('focusin', closeOutside);
+  window.matchMedia('(max-width: 760px)').addEventListener('change', () => set(false));
 })();
 
 // Section bar: mark the section being read, and keep its link in view when the bar scrolls
@@ -78,10 +81,13 @@ document.querySelectorAll('[data-tabs]').forEach((root) => {
   );
   const sections = [...links.keys()].map((id) => document.getElementById(id)).filter(Boolean);
   const shown = new Set();
+  let atPageEnd = false;
   let current = null;
   const mark = () => {
-    // The first section, in page order, that crosses the reading line.
-    const id = sections.find((s) => shown.has(s.id))?.id || null;
+    const section = atPageEnd
+      ? sections[sections.length - 1]
+      : sections.find((s) => shown.has(s.id));
+    const id = section?.id || null;
     if (id === current) return;
     current = id;
     links.forEach((a, key) => {
@@ -103,6 +109,20 @@ document.querySelectorAll('[data-tabs]').forEach((root) => {
     { rootMargin: '-33% 0px -66% 0px' },
   );
   sections.forEach((s) => io.observe(s));
+
+  // At the page end a short final section may never reach the reading line.
+  const footer = document.querySelector('.site-footer');
+  if (footer) {
+    const endObserver = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[entries.length - 1];
+        atPageEnd = entry.intersectionRatio >= 1 && entry.boundingClientRect.top > 0;
+        mark();
+      },
+      { threshold: 1, rootMargin: '0px 0px 2px 0px' },
+    );
+    endObserver.observe(footer);
+  }
 })();
 
 // Copy BibTeX.
